@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VESTA — An Exercise of the Will</title>
+  <meta name="description" content="William James's matchbox exercise for training the will: take every match out one by one, then bring them back." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="edge-label" aria-hidden="true">Willpower&nbsp;&middot;&nbsp;Training&nbsp;&middot;&nbsp;No.&nbsp;1</div>
+
+  <main class="page">
+    <section class="course" aria-label="Your seven-day progress">
+      <div class="course-track">
+        <div class="course-meta">
+          <p class="course-day">Day <span id="day-num">1</span><span class="course-of"> / 7</span></p>
+          <p class="course-note" id="course-note"></p>
+        </div>
+        <div class="pips" id="pips" aria-hidden="true"></div>
+      </div>
+      <details class="why">
+        <summary>Why seven days?</summary>
+        <p>A single effort proves nothing; the will is strengthened the way a muscle is —
+          by small, deliberate, repeated exertion. James urged a daily dose of <em>gratuitous
+          exercise</em>: doing a thing for no reason but that you would rather not. Seven
+          unbroken days is the shortest stretch long enough for the act to cross from a
+          decision you make into a routine you keep.</p>
+        <p><strong>Expect the first three days to be the hardest.</strong> That is when boredom
+          and the “why am I even doing this?” urge are loudest, before the habit forms. Push
+          through them and the rest come far easier. Miss a day and the count does not advance —
+          it asks only that you return.</p>
+      </details>
+    </section>
+
+    <section class="stage" aria-label="The matchbox exercise">
+      <!-- THE BOX -->
+      <div class="panel panel--box">
+        <article class="matchbox" aria-label="Matchbox">
+          <div class="strike strike--l" aria-hidden="true"></div>
+          <div class="strike strike--r" aria-hidden="true"></div>
+          <div class="label">
+            <svg class="emblem" viewBox="0 0 40 56" aria-hidden="true">
+              <defs>
+                <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+                  <stop offset="0%" stop-color="#b3241a" />
+                  <stop offset="55%" stop-color="#e2452a" />
+                  <stop offset="100%" stop-color="#ffb347" />
+                </linearGradient>
+              </defs>
+              <g class="flame">
+                <path d="M20 4 C 30 18, 34 24, 30 36 C 28 44, 22 48, 20 48
+                         C 18 48, 12 44, 10 36 C 6 24, 12 16, 20 4 Z" fill="url(#flame)" />
+                <path d="M20 22 C 25 30, 26 34, 23 40 C 22 44, 20 45, 20 45
+                         C 20 45, 18 44, 17 40 C 14 34, 16 28, 20 22 Z" fill="#fff3d6" opacity="0.8" />
+              </g>
+              <rect x="18.5" y="46" width="3" height="8" rx="1.2" fill="#2a2018" />
+            </svg>
+            <h2 class="brand">Vesta</h2>
+            <p class="brand-sub">Safety Matches</p>
+            <p class="brand-line">An Exercise &middot; of &middot; the Will</p>
+          </div>
+          <div class="tray" id="box-tray" role="list" aria-label="Matches in the box"></div>
+          <p class="readout"><span class="readout-key">In the box</span><span class="readout-val" id="box-count">00</span></p>
+        </article>
+      </div>
+
+      <!-- SET ASIDE -->
+      <div class="panel panel--aside">
+        <p class="aside-title">Set Aside</p>
+        <div class="slab" aria-label="Matches set aside">
+          <div class="tray tray--aside" id="aside-tray" role="list" aria-label="Matches set aside"></div>
+          <p class="slab-empty" id="slab-empty">— empty —</p>
+        </div>
+        <p class="readout"><span class="readout-key">Set aside</span><span class="readout-val" id="aside-count">00</span></p>
+      </div>
+    </section>
+
+    <section class="console">
+      <p class="cue" id="cue">Drag them out — one by one.</p>
+      <div class="console-row">
+        <div class="meter">
+          <span class="meter-label">This round</span>
+          <span class="timer" id="timer">00:00</span>
+        </div>
+        <div class="reps">
+          <span class="reps-label">Repetitions</span>
+          <div class="tally" id="tally" aria-hidden="true"></div>
+          <span class="reps-num" id="reps-num">0</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="ledger" aria-label="Your journal">
+      <h2 class="ledger-title">Journal</h2>
+      <div class="ledger-list" id="ledger-list"></div>
+    </section>
+
+    <footer class="quote">
+      <p class="quote-text">“Keep the faculty of effort alive in you by a little gratuitous
+        exercise every day. Be systematically heroic in little unnecessary points.”</p>
+      <p class="quote-cite">— William James, <em>The Principles of Psychology</em>, 1890</p>
+    </footer>
+  </main>
+
+  <p class="sr-only" id="status" role="status" aria-live="polite"></p>
+
+  <div class="overlay" id="onboard" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="onboard-title">
+      <p class="sheet-kicker">The William James Method</p>
+      <h2 class="sheet-title" id="onboard-title">Train willpower by doing meaningless things.</h2>
+      <p class="how">Here's how it works</p>
+      <div class="demo" aria-hidden="true">
+        <div class="demo-zone demo-box"><span class="demo-tag">in box</span></div>
+        <div class="demo-zone demo-slot"><span class="demo-tag">set aside</span></div>
+        <span class="demo-match demo-static"><span class="head"></span><span class="stick"></span></span>
+        <span class="demo-match demo-runner"><span class="head"></span><span class="stick"></span></span>
+      </div>
+      <ol class="steps">
+        <li>
+          <span class="step-n">1</span>
+          <div class="step-body">
+            <h3>Take them out</h3>
+            <p>Drag every match out of the box, one at a time.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-n">2</span>
+          <div class="step-body">
+            <h3>Take them back</h3>
+            <p>Then, just as slowly, drag every one back in.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-n">3</span>
+          <div class="step-body">
+            <h3>Write what stopped you</h3>
+            <p>Name the thoughts, urges and interruptions that pulled at you.</p>
+          </div>
+        </li>
+      </ol>
+      <p class="payoff">Do this for <strong>seven days</strong> and you'll come out with a
+        noticeably stronger will — and a clear picture of what keeps trying to stop you.</p>
+      <button type="button" class="begin" id="onboard-begin">Begin</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <p class="sheet-kicker">Day <span id="sheet-day">1</span> &middot; Round complete &middot; <span id="round-time">00:00</span></p>
+      <h2 class="sheet-title" id="sheet-title">What tried to stop you?</h2>
+      <p class="sheet-sub">Five resistances rose while you worked — a stray thought, a buzzing
+        phone, someone calling your name, the small voice insisting this is pointless.
+        Name them. Noticing the pull is the whole exercise.</p>
+      <ol class="reasons" id="reasons">
+        <li><input type="text" maxlength="140" placeholder="A thought that pulled you elsewhere…" /></li>
+        <li><input type="text" maxlength="140" placeholder="Something happened around you…" /></li>
+        <li><input type="text" maxlength="140" placeholder="Someone called, texted, interrupted…" /></li>
+        <li><input type="text" maxlength="140" placeholder="A bodily urge — restlessness, boredom…" /></li>
+        <li><input type="text" maxlength="140" placeholder="“This is pointless” — the voice of quitting…" /></li>
+      </ol>
+      <button type="button" class="begin" id="begin-again">Begin again</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

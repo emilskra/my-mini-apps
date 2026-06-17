@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Apps</title>
+  <meta name="description" content="A small workshop of single-purpose web apps." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #efe6d4;
+      --ink-soft: #b6a98f;
+      --ink-faint: #6f6450;
+      --amber: #ffb347;
+      --ember: #e2452a;
+      --ff-display: "Abril Fatface", Georgia, serif;
+      --ff-serif: "Cormorant Garamond", Georgia, serif;
+      --ff-mono: "Space Mono", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--ff-serif);
+      background: radial-gradient(135% 110% at 50% -15%, #4a3826 0%, #25190f 46%, #140d07 100%);
+      background-attachment: fixed;
+    }
+    body::after {
+      content: "";
+      position: fixed; inset: 0; z-index: 200;
+      pointer-events: none; opacity: 0.045; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: clamp(3rem, 8vw, 6rem) clamp(1.4rem, 5vw, 4rem) 4rem;
+    }
+    .kicker {
+      margin: 0 0 1.1rem;
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.38em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+    h1 {
+      margin: 0;
+      font-family: var(--ff-display);
+      font-weight: 400;
+      font-size: clamp(3rem, 10vw, 6rem);
+      line-height: 0.94;
+      letter-spacing: -0.01em;
+    }
+    h1 em { font-style: italic; color: var(--ember); }
+    .lede {
+      margin: 1.3rem 0 0;
+      max-width: 32rem;
+      font-size: 1.2rem;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+    .grid {
+      margin-top: clamp(2.5rem, 6vw, 4rem);
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+      gap: 1.2rem;
+    }
+    .card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1.6rem 1.5rem 1.5rem;
+      border: 1px solid rgba(239, 230, 212, 0.14);
+      border-radius: 8px;
+      background: linear-gradient(165deg, rgba(74, 56, 38, 0.35), rgba(30, 21, 13, 0.35));
+      color: inherit;
+      text-decoration: none;
+      overflow: hidden;
+      transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+    }
+    .card::before {
+      content: attr(data-idx);
+      position: absolute;
+      top: 1rem; right: 1.2rem;
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 179, 71, 0.55);
+      background: linear-gradient(165deg, rgba(90, 66, 42, 0.45), rgba(36, 25, 15, 0.45));
+    }
+    .card-tag {
+      font-family: var(--ff-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+    .card-name {
+      font-family: var(--ff-display);
+      font-size: 2rem;
+      line-height: 1;
+    }
+    .card-tagline {
+      font-size: 1.12rem;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+    .card-note {
+      margin-top: 0.2rem;
+      font-style: italic;
+      font-size: 0.98rem;
+      color: var(--ink-faint);
+    }
+    .card-go {
+      margin-top: auto;
+      padding-top: 0.9rem;
+      font-family: var(--ff-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ember);
+    }
+    .card:hover .card-go { color: var(--amber); }
+    .empty {
+      grid-column: 1 / -1;
+      padding: 2rem;
+      border: 1px dashed rgba(239, 230, 212, 0.18);
+      border-radius: 8px;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
+    footer {
+      margin-top: clamp(3rem, 7vw, 4.5rem);
+      padding-top: 1.6rem;
+      border-top: 1px solid rgba(239, 230, 212, 0.14);
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--ink-faint);
+    }
+    footer a { color: var(--ink-soft); }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <p class="kicker">A small workshop</p>
+    <h1>Mini <em>Apps</em></h1>
+    <p class="lede">Single-purpose little web apps, each built to do one thing well.
+      Pick one to begin.</p>
+
+    <div class="grid" id="grid"></div>
+
+    <footer>
+      Source on <a href="https://github.com/emilskra/my-mini-apps" target="_blank" rel="noopener">GitHub</a>.
+    </footer>
+  </main>
+
+  <script>
+    // Add a new app by appending an entry here.
+    const apps = [
+      {
+        name: "Matches",
+        path: "matches/",
+        tag: "Willpower",
+        tagline: "Train willpower by doing meaningless things.",
+        note: "The William James method — take out 50 matches, one by one, then bring them back.",
+      },
+    ];
+
+    const grid = document.getElementById("grid");
+    if (!apps.length) {
+      grid.innerHTML = '<p class="empty">No apps yet — the first one is on its way.</p>';
+    } else {
+      apps.forEach((app, i) => {
+        const a = document.createElement("a");
+        a.className = "card";
+        a.href = app.path;
+        a.dataset.idx = String(i + 1).padStart(2, "0");
+        a.innerHTML =
+          (app.tag ? '<span class="card-tag">' + app.tag + "</span>" : "") +
+          '<span class="card-name">' + app.name + "</span>" +
+          '<span class="card-tagline">' + app.tagline + "</span>" +
+          (app.note ? '<span class="card-note">' + app.note + "</span>" : "") +
+          '<span class="card-go">Open &rarr;</span>';
+        grid.appendChild(a);
+      });
+    }
+  </script>
+</body>
+</html>
