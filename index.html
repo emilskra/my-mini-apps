@@ -10,11 +10,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --ink: #efe6d4;
-      --ink-soft: #b6a98f;
-      --ink-faint: #6f6450;
-      --amber: #ffb347;
-      --ember: #e2452a;
+      --ink: #f4ead6;
+      --ink-soft: #c6b793;
+      --ink-faint: #857758;
+      --amber: #e8b450;
+      --gold: #f3cd72;
+      --ember: #e23a1f;
+      --ember-hot: #ff7a3d;
       --ff-display: "Abril Fatface", Georgia, serif;
       --ff-serif: "Cormorant Garamond", Georgia, serif;
       --ff-mono: "Space Mono", "Courier New", monospace;
@@ -25,8 +27,16 @@
       min-height: 100vh;
       color: var(--ink);
       font-family: var(--ff-serif);
-      background: radial-gradient(135% 110% at 50% -15%, #4a3826 0%, #25190f 46%, #140d07 100%);
+      background:
+        radial-gradient(90% 60% at 50% -12%, rgba(255,138,72,0.16) 0%, rgba(255,138,72,0) 60%),
+        radial-gradient(120% 90% at 50% 120%, rgba(122,31,18,0.22) 0%, rgba(122,31,18,0) 55%),
+        radial-gradient(135% 115% at 50% -15%, #2f2012 0%, #160d07 48%, #0e0a07 100%);
       background-attachment: fixed;
+    }
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background: radial-gradient(120% 100% at 50% 38%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.45) 100%);
     }
     body::after {
       content: "";
@@ -75,13 +85,14 @@
       flex-direction: column;
       gap: 0.5rem;
       padding: 1.6rem 1.5rem 1.5rem;
-      border: 1px solid rgba(239, 230, 212, 0.14);
-      border-radius: 8px;
-      background: linear-gradient(165deg, rgba(74, 56, 38, 0.35), rgba(30, 21, 13, 0.35));
+      border: 1px solid rgba(244, 234, 214, 0.12);
+      border-radius: 9px;
+      background: linear-gradient(165deg, rgba(74, 52, 32, 0.4), rgba(26, 17, 10, 0.4));
+      box-shadow: 0 14px 30px -20px rgba(0, 0, 0, 0.8);
       color: inherit;
       text-decoration: none;
       overflow: hidden;
-      transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+      transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
     }
     .card::before {
       content: attr(data-idx);
@@ -93,9 +104,12 @@
       color: var(--ink-faint);
     }
     .card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(255, 179, 71, 0.55);
-      background: linear-gradient(165deg, rgba(90, 66, 42, 0.45), rgba(36, 25, 15, 0.45));
+      transform: translateY(-4px);
+      border-color: rgba(232, 180, 80, 0.55);
+      background: linear-gradient(165deg, rgba(96, 68, 40, 0.5), rgba(34, 22, 13, 0.5));
+      box-shadow:
+        0 22px 44px -22px rgba(0, 0, 0, 0.85),
+        0 0 40px -14px rgba(255, 138, 72, 0.25);
     }
     .card-tag {
       font-family: var(--ff-mono);
@@ -173,6 +187,13 @@
         tag: "Willpower",
         tagline: "Train willpower by doing meaningless things.",
         note: "The William James method — take out 50 matches, one by one, then bring them back.",
+      },
+      {
+        name: "Floor Planner",
+        path: "floor_planner/floor-planner.html",
+        tag: "Spatial",
+        tagline: "Sketch rooms and arrange furniture to scale.",
+        note: "Drag, drop, and lay out a space before you move a single thing.",
       },
     ];
 

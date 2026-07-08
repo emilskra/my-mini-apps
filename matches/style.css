@@ -4,19 +4,21 @@
    ========================================================= */
 
 :root {
-  --ink:        #efe6d4;   /* warm cream text            */
-  --ink-soft:   #b6a98f;   /* muted cream                */
-  --ink-faint:  #6f6450;   /* faint label text           */
-  --card:       #e9dcbf;   /* aged paper / matchbox label */
-  --card-edge:  #cdbf9c;
-  --cardboard:  #36281a;   /* box body / compartment      */
-  --cardboard-d:#241a10;
-  --wood:       #d8c197;   /* matchstick wood             */
-  --wood-d:     #b89868;
-  --ember:      #e2452a;   /* match head                  */
-  --ember-hot:  #ff7a3d;   /* glow                        */
-  --amber:      #ffb347;
-  --maroon:     #5c2418;   /* strike strip                */
+  --ink:        #f4ead6;   /* warm cream text             */
+  --ink-soft:   #c6b793;   /* muted gold-cream            */
+  --ink-faint:  #857758;   /* faint label text            */
+  --card:       #eddcb5;   /* aged paper / matchbox label */
+  --card-edge:  #ccb785;
+  --cardboard:  #3b2816;   /* box body / compartment      */
+  --cardboard-d:#1c120a;
+  --wood:       #dec699;   /* matchstick wood             */
+  --wood-d:     #b8945c;
+  --ember:      #e23a1f;   /* match head                  */
+  --ember-hot:  #ff7a3d;   /* ember-orange glow / accent  */
+  --amber:      #e8b450;   /* gold leaf accent            */
+  --gold:       #f3cd72;   /* brighter gold highlight     */
+  --maroon:     #7a1f12;   /* oxblood — strike / deep red */
+  --oxblood:    #460f08;   /* deepest red, for depth      */
   --ff-display: "Abril Fatface", Georgia, serif;
   --ff-serif:   "Cormorant Garamond", Georgia, serif;
   --ff-mono:    "Space Mono", "Courier New", monospace;
@@ -32,9 +34,24 @@ body {
   color: var(--ink);
   font-family: var(--ff-serif);
   background:
-    radial-gradient(135% 110% at 50% -15%, #4a3826 0%, #25190f 46%, #140d07 100%);
+    /* candle-warm glow from above */
+    radial-gradient(90% 60% at 50% -12%, rgba(255,138,72,0.16) 0%, rgba(255,138,72,0) 60%),
+    /* oxblood depth bleeding up from the desk */
+    radial-gradient(120% 90% at 50% 120%, rgba(122,31,18,0.22) 0%, rgba(122,31,18,0) 55%),
+    /* the desk itself, near-black */
+    radial-gradient(135% 115% at 50% -15%, #2f2012 0%, #160d07 48%, #0e0a07 100%);
   background-attachment: fixed;
   overflow-x: hidden;
+}
+
+/* soft vignette to draw the eye inward */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 38%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.45) 100%);
 }
 
 /* film grain over everything */
@@ -188,14 +205,16 @@ body::after {
 .matchbox {
   position: relative;
   padding: 1.5rem 1.5rem 1.1rem;
-  border-radius: 7px;
+  border-radius: 8px;
   background:
-    linear-gradient(165deg, #f0e4c8 0%, var(--card) 55%, var(--card-edge) 100%);
+    linear-gradient(165deg, #f6ebcc 0%, var(--card) 52%, var(--card-edge) 100%);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.5) inset,
-    0 -2px 6px rgba(120,90,50,0.25) inset,
-    0 26px 50px -18px rgba(0,0,0,0.7),
-    0 4px 10px rgba(0,0,0,0.4);
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 -2px 7px rgba(120,80,40,0.3) inset,
+    0 0 0 1px rgba(70,15,8,0.4),
+    0 30px 60px -20px rgba(0,0,0,0.8),
+    0 6px 16px rgba(0,0,0,0.45),
+    0 0 70px -12px rgba(255,138,72,0.2);
 }
 /* paper texture */
 .matchbox::before {
@@ -256,13 +275,13 @@ body::after {
   margin: 0.65rem auto 0;
   padding: 0.35rem 0;
   max-width: 14rem;
-  border-top: 1px solid rgba(92,36,24,0.35);
-  border-bottom: 1px solid rgba(92,36,24,0.35);
+  border-top: 1px solid rgba(122,31,18,0.42);
+  border-bottom: 1px solid rgba(122,31,18,0.42);
   font-family: var(--ff-mono);
   font-size: 0.62rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #9c6242;
+  color: #9c5a36;
 }
 
 /* the open compartment that holds the matches */
@@ -310,13 +329,14 @@ body::after {
 .slab {
   position: relative;
   padding: 0.8rem;
-  border-radius: 7px;
+  border-radius: 8px;
   background:
-    radial-gradient(120% 100% at 50% 0%, #2a2118, #1a140d);
+    radial-gradient(120% 100% at 50% 0%, #2c2017 0%, #150d07 100%);
   box-shadow:
-    0 2px 5px rgba(0,0,0,0.5) inset,
-    0 0 0 1px rgba(255,255,255,0.03) inset,
-    0 18px 40px -22px rgba(0,0,0,0.8);
+    0 2px 6px rgba(0,0,0,0.55) inset,
+    0 0 0 1px rgba(122,31,18,0.18) inset,
+    0 0 26px -6px rgba(255,138,72,0.06) inset,
+    0 18px 40px -22px rgba(0,0,0,0.82);
   transition: box-shadow 0.2s ease;
 }
 
@@ -832,19 +852,28 @@ body::after {
 .begin {
   appearance: none;
   border: 0;
-  border-radius: 5px;
-  padding: 0.85rem 1.8rem;
-  background: var(--ember);
-  color: #fbeede;
+  border-radius: 6px;
+  padding: 0.9rem 1.9rem;
+  background: linear-gradient(180deg, #ef5a32 0%, var(--ember) 58%, #c12d18 100%);
+  color: #fff3e4;
   font-family: var(--ff-mono);
   font-size: 0.8rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 8px 18px -8px rgba(226,69,42,0.7);
-  transition: background 0.18s ease, transform 0.12s ease;
+  box-shadow:
+    0 1px 0 rgba(255,221,184,0.45) inset,
+    0 0 0 1px rgba(70,15,8,0.4),
+    0 10px 24px -8px rgba(226,58,31,0.7);
+  transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
-.begin:hover { background: #c93620; }
+.begin:hover {
+  background: linear-gradient(180deg, #ff6c3f 0%, #d83a20 58%, #b3260f 100%);
+  box-shadow:
+    0 1px 0 rgba(255,221,184,0.5) inset,
+    0 0 0 1px rgba(70,15,8,0.45),
+    0 12px 30px -8px rgba(255,122,61,0.6);
+}
 .begin:active { transform: translateY(1px); }
 
 /* ---------- responsive ---------- */

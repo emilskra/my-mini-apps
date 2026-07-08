@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Floor Planner</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2430; --line:#2b3644;
+    --ink:#e6edf3; --muted:#8b98a8; --faint:#5b6675;
+    --accent:#4c9aff; --accent2:#2f6fd6;
+    --ok:#3fb950; --warn:#e3b341; --danger:#f0603a;
+    --mono:'SFMono-Regular',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;flex-direction:column;height:100%}
+
+  /* ---- top bar ---- */
+  header{display:flex;align-items:center;gap:14px;padding:9px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;z-index:20}
+  .brand{font-weight:650;letter-spacing:.3px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .brand b{color:var(--accent)}
+  .sep{width:1px;height:22px;background:var(--line);margin:0 2px}
+  .btn{appearance:none;border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+    font:inherit;font-size:12.5px;padding:7px 11px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;transition:.12s}
+  .btn:hover{border-color:var(--faint);background:#232d3b}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent2);border-color:var(--accent2)}
+  .btn.primary:hover{background:var(--accent)}
+  .btn.on{background:var(--accent2);border-color:var(--accent);color:#fff}
+  .btn.ghost{background:transparent}
+  .scaleTag{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .scaleTag b{color:var(--ok)}
+  .scaleTag.unset b{color:var(--warn)}
+  .spacer{flex:1}
+  .hint{font-size:12px;color:var(--muted)}
+
+  /* ---- main ---- */
+  main{flex:1;display:flex;min-height:0}
+  #stageWrap{flex:1;position:relative;overflow:hidden;background:
+    radial-gradient(circle at 30% 20%,#131a24,transparent 60%),
+    var(--bg);
+    touch-action:none;cursor:grab}
+  #stageWrap.panning{cursor:grabbing}
+  #stageWrap.calib{cursor:crosshair}
+  #planImg{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;image-rendering:auto;box-shadow:0 0 0 1px rgba(255,255,255,.05)}
+  #svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+  #items{position:absolute;inset:0;pointer-events:none}
+
+  .item{position:absolute;pointer-events:auto;cursor:move;border:1.5px solid var(--c);
+    background:color-mix(in srgb,var(--c) 22%,transparent);border-radius:3px;
+    display:flex;align-items:center;justify-content:center;overflow:visible}
+  .item .lbl{font-family:var(--mono);font-size:11px;line-height:1.25;text-align:center;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.7);pointer-events:none;padding:2px;white-space:nowrap}
+  .item.sel{border-width:2px;box-shadow:0 0 0 1px #000,0 0 0 3px color-mix(in srgb,var(--c) 60%,transparent)}
+  .handle{position:absolute;width:14px;height:14px;background:#fff;border:1.5px solid var(--accent2);border-radius:50%;
+    pointer-events:auto;touch-action:none}
+  .h-res{cursor:nwse-resize}
+  .h-rot{background:var(--accent);border-color:#fff;cursor:grab;top:-34px;left:50%;transform:translate(-50%,-50%)}
+  .rotstem{position:absolute;top:-34px;left:50%;width:1.5px;height:34px;background:var(--accent);transform:translateX(-50%);pointer-events:none}
+
+  /* empty state */
+  #empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px;color:var(--muted)}
+  #empty h2{color:var(--ink);font-weight:600;margin:0;font-size:19px}
+  #empty p{margin:0;max-width:380px;line-height:1.5;font-size:13.5px}
+  #dropZone{border:1.5px dashed var(--line);border-radius:14px;padding:34px 40px;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:14px}
+  #dropZone.over{border-color:var(--accent);background:rgba(76,154,255,.06)}
+  .drop-ico{font-size:34px;opacity:.7}
+
+  /* ---- right inspector ---- */
+  aside{width:270px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto}
+  aside.hidden{display:none}
+  .sec{padding:13px 14px;border-bottom:1px solid var(--line)}
+  .sec h3{margin:0 0 10px;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);font-weight:600}
+  .palette{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .pbtn{border:1px solid var(--line);background:var(--panel2);border-radius:7px;padding:8px 6px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:flex-start;gap:2px;transition:.12s;text-align:left}
+  .pbtn:hover{border-color:var(--faint);background:#232d3b}
+  .pbtn .pn{font-size:12px;font-weight:550;display:flex;align-items:center;gap:6px}
+  .pbtn .dot{width:9px;height:9px;border-radius:2px;flex:none}
+  .pbtn .pd{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+
+  .field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+  .field label{font-size:12px;color:var(--muted)}
+  .field .inp{display:flex;align-items:center;gap:4px}
+  input.num{width:74px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);
+    font-size:12.5px;padding:6px 8px;border-radius:6px;text-align:right}
+  input.txt{width:150px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font-size:12.5px;padding:6px 8px;border-radius:6px}
+  input.num:focus,input.txt:focus{outline:none;border-color:var(--accent)}
+  .unit{font-family:var(--mono);font-size:11px;color:var(--faint);width:22px}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap}
+  .sw{width:22px;height:22px;border-radius:5px;cursor:pointer;border:2px solid transparent}
+  .sw.on{border-color:#fff}
+  .row2{display:flex;gap:8px}
+  .row2 .btn{flex:1;justify-content:center}
+  .noSel{font-size:12.5px;color:var(--faint);line-height:1.5}
+  .kbd{font-family:var(--mono);font-size:10.5px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:var(--muted)}
+
+  /* zoom controls */
+  #zoombar{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px;z-index:15}
+  #zoombar .btn{width:38px;height:38px;justify-content:center;padding:0;font-size:18px;background:var(--panel);backdrop-filter:blur(4px)}
+  #ruler{position:absolute;left:14px;bottom:14px;z-index:15;background:rgba(13,17,23,.8);border:1px solid var(--line);
+    border-radius:7px;padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--muted);backdrop-filter:blur(4px);display:none}
+  #ruler .bar{height:4px;background:var(--ink);margin-top:5px;border-left:1px solid var(--ink);border-right:1px solid var(--ink);position:relative}
+
+  /* calibration modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:60}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .modal h3{margin:0 0 6px;font-size:15px}
+  .modal p{margin:0 0 14px;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .modal .inline{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+  .modal .inline input{flex:1;text-align:left}
+  .modal select{background:var(--bg);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);padding:7px;border-radius:6px}
+
+  /* calibration banner */
+  #calibBanner{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:30;background:var(--accent2);
+    color:#fff;padding:9px 16px;border-radius:20px;font-size:12.5px;display:none;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  #calibBanner .x{cursor:pointer;opacity:.85;font-weight:700}
+
+  .fileInput{position:fixed;left:-10000px;top:0;width:1px;height:1px;opacity:0}
+  @media (max-width:720px){
+    aside{position:absolute;right:0;top:0;bottom:0;z-index:25;box-shadow:-8px 0 24px rgba(0,0,0,.4)}
+    .brand span.full{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">📐 <b>Floor</b><span class="full">Planner</span></div>
+    <div class="sep"></div>
+    <button class="btn" id="uploadBtn">Upload plan</button>
+    <button class="btn" id="calibBtn">Calibrate scale</button>
+    <div class="scaleTag unset" id="scaleTag">scale: <b id="scaleVal">not set</b></div>
+    <div class="spacer"></div>
+    <span class="hint" id="topHint">Upload a plan screenshot to start</span>
+    <div class="sep"></div>
+    <button class="btn ghost" id="gridBtn">Grid</button>
+    <button class="btn ghost" id="panelBtn" title="Toggle panel">Panel</button>
+  </header>
+
+  <main>
+    <div id="stageWrap">
+      <img id="planImg" alt="">
+      <svg id="svg"></svg>
+      <div id="items"></div>
+
+      <div id="empty">
+        <div id="dropZone">
+          <div class="drop-ico">🖼️</div>
+          <h2>Drop your apartment plan here</h2>
+          <p>Upload a screenshot of a floor plan that has at least one known measurement. Then calibrate the scale and start placing furniture at real sizes.</p>
+          <button class="btn primary" id="uploadBtn2">Choose image</button>
+        </div>
+      </div>
+
+      <div id="calibBanner">
+        <span id="calibText">Click the two ends of a known dimension</span>
+        <span class="x" id="calibCancel">✕</span>
+      </div>
+
+      <div id="ruler"><span id="rulerLabel">1 m</span><div class="bar" id="rulerBar"></div></div>
+
+      <div id="zoombar">
+        <button class="btn" id="zInBtn">+</button>
+        <button class="btn" id="zOutBtn">−</button>
+        <button class="btn" id="zFitBtn" title="Fit" style="font-size:13px">⤢</button>
+      </div>
+    </div>
+
+    <aside id="inspector">
+      <div class="sec">
+        <h3>Add furniture</h3>
+        <div class="palette" id="palette"></div>
+        <button class="btn ghost" id="wallBtn" style="width:100%;justify-content:center;margin-top:6px">➕ Wall / partition</button>
+      </div>
+
+      <div class="sec" id="selSec">
+        <h3>Selected item</h3>
+        <div class="noSel" id="noSel">
+          Nothing selected. Click an item to edit its size, rotation and label.<br><br>
+          <span class="kbd">Del</span> delete &nbsp; <span class="kbd">R</span> rotate 90° &nbsp; <span class="kbd">⌫/arrows</span> nudge
+        </div>
+        <div id="selBody" style="display:none">
+          <div class="field"><label>Label</label><div class="inp"><input class="txt" id="iLabel"></div></div>
+          <div class="field"><label>Width</label><div class="inp"><input class="num" id="iW" type="number" min="1" step="1"><span class="unit">cm</span></div></div>
+          <div class="field"><label>Depth</label><div class="inp"><input class="num" id="iH" type="number" min="1" step="1"><span class="unit">cm</span></div></div>
+          <div class="field"><label>Rotation</label><div class="inp"><input class="num" id="iR" type="number" step="1"><span class="unit">°</span></div></div>
+          <div class="field" style="align-items:flex-start"><label style="margin-top:4px">Color</label><div class="swatches" id="swatches"></div></div>
+          <div class="row2" style="margin-top:4px">
+            <button class="btn" id="dupBtn">Duplicate</button>
+            <button class="btn" id="delBtn" style="color:var(--danger)">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3>Layout</h3>
+        <div class="row2">
+          <button class="btn ghost" id="clearBtn">Clear all</button>
+          <button class="btn ghost" id="exportBtn">Save PNG</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<input type="file" accept="image/*" class="fileInput" id="fileInput">
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const stageWrap=$('#stageWrap'), planImg=$('#planImg'), svg=$('#svg'), itemsEl=$('#items');
+
+/* ---------- state ---------- */
+let img=null;                       // natural dimensions once loaded
+let view={x:0,y:0,zoom:1};          // world(image px)->screen: sx = x + wx*zoom
+let ppm=null;                       // pixels(image) per meter -> the scale
+let items=[];                       // {id,type,cx,cy,w,h(meters),rot,color,label}
+let selId=null;
+let showGrid=false;
+let uid=1;
+
+const COLORS=['#4c9aff','#3fb950','#e3b341','#f0603a','#a371f7','#f778ba','#39c5cf','#c9d1d9'];
+
+/* furniture presets: dimensions in cm  (w = across, h = depth) */
+const PRESETS=[
+  {type:'Single bed',  w:90, h:200, c:'#4c9aff'},
+  {type:'Double bed',  w:160,h:200, c:'#4c9aff'},
+  {type:'King bed',    w:180,h:200, c:'#4c9aff'},
+  {type:'Wardrobe',    w:100,h:60,  c:'#a371f7'},
+  {type:'Sofa',        w:200,h:90,  c:'#3fb950'},
+  {type:'Armchair',    w:80, h:80,  c:'#3fb950'},
+  {type:'Dining table',w:120,h:80,  c:'#e3b341'},
+  {type:'Desk',        w:140,h:70,  c:'#e3b341'},
+  {type:'Fridge',      w:60, h:65,  c:'#39c5cf'},
+  {type:'Kitchen unit',w:60, h:200, c:'#39c5cf'},
+  {type:'Bathtub',     w:170,h:75,  c:'#f778ba'},
+  {type:'Toilet',      w:40, h:60,  c:'#f778ba'},
+  {type:'Nightstand',  w:45, h:40,  c:'#c9d1d9'},
+  {type:'Custom box',  w:100,h:100, c:'#f0603a'},
+];
+
+/* ---------- coordinate helpers ---------- */
+const toScreen=(wx,wy)=>[view.x+wx*view.zoom, view.y+wy*view.zoom];
+const toWorld =(sx,sy)=>[(sx-view.x)/view.zoom, (sy-view.y)/view.zoom];
+function stagePt(e){const r=stageWrap.getBoundingClientRect();return [e.clientX-r.left, e.clientY-r.top];}
+const rot=(x,y,a)=>{const c=Math.cos(a),s=Math.sin(a);return [x*c-y*s, x*s+y*c];};
+
+/* ---------- image load ---------- */
+function loadImage(file){
+  if(!file || !file.type.startsWith('image/')){alert('Please choose an image file.');return;}
+  const reader=new FileReader();
+  reader.onerror=()=>alert('Could not read that file. Try a PNG or JPG.');
+  reader.onload=()=>{
+    const url=reader.result; // data URL — safe inside the sandbox
+    const im=new Image();
+    im.onload=()=>{
+      img={w:im.naturalWidth,h:im.naturalHeight};
+      planImg.src=url;
+      $('#empty').style.display='none';
+      fitView();
+      $('#topHint').textContent = ppm? 'Add furniture from the panel →' : 'Now calibrate the scale using a known measurement';
+      render();
+    };
+    im.onerror=()=>alert('That image could not be loaded. Try another file.');
+    im.src=url;
+  };
+  reader.readAsDataURL(file);
+}
+$('#fileInput').addEventListener('change',e=>{if(e.target.files[0])loadImage(e.target.files[0]);e.target.value='';});
+['#uploadBtn','#uploadBtn2'].forEach(s=>$(s).addEventListener('click',()=>$('#fileInput').click()));
+
+// drag & drop
+const dz=$('#dropZone');
+['dragenter','dragover'].forEach(ev=>stageWrap.addEventListener(ev,e=>{e.preventDefault();if(dz)dz.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>stageWrap.addEventListener(ev,e=>{e.preventDefault();if(dz)dz.classList.remove('over');}));
+stageWrap.addEventListener('drop',e=>{const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));if(f)loadImage(f);});
+
+/* ---------- view / fit / zoom ---------- */
+function fitView(){
+  if(!img)return;
+  const r=stageWrap.getBoundingClientRect();
+  const pad=40;
+  const z=Math.min((r.width-pad)/img.w,(r.height-pad)/img.h);
+  view.zoom=z;
+  view.x=(r.width-img.w*z)/2;
+  view.y=(r.height-img.h*z)/2;
+}
+function zoomAt(sx,sy,factor){
+  const [wx,wy]=toWorld(sx,sy);
+  view.zoom=Math.min(20,Math.max(.02,view.zoom*factor));
+  view.x=sx-wx*view.zoom; view.y=sy-wy*view.zoom;
+  render();
+}
+stageWrap.addEventListener('wheel',e=>{e.preventDefault();const [sx,sy]=stagePt(e);zoomAt(sx,sy,e.deltaY<0?1.12:1/1.12);},{passive:false});
+$('#zInBtn').onclick=()=>{const r=stageWrap.getBoundingClientRect();zoomAt(r.width/2,r.height/2,1.2);};
+$('#zOutBtn').onclick=()=>{const r=stageWrap.getBoundingClientRect();zoomAt(r.width/2,r.height/2,1/1.2);};
+$('#zFitBtn').onclick=()=>{fitView();render();};
+
+/* ---------- render ---------- */
+function render(){
+  if(img){
+    planImg.style.width=img.w+'px';planImg.style.height=img.h+'px';
+    planImg.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.zoom})`;
+  }
+  renderSVG();
+  renderItems();
+  renderRuler();
+}
+
+function renderSVG(){
+  let out='';
+  // grid (1m spacing) if calibrated
+  if(showGrid && ppm){
+    const r=stageWrap.getBoundingClientRect();
+    const step=ppm*view.zoom;                       // px between meter lines on screen
+    if(step>6){
+      const [w0x,w0y]=toWorld(0,0);
+      const startX=Math.floor(w0x/ppm)*ppm, startY=Math.floor(w0y/ppm)*ppm;
+      for(let wx=startX; ;wx+=ppm){const [sx]=toScreen(wx,0);if(sx>r.width)break;if(sx<0)continue;out+=`<line x1="${sx}" y1="0" x2="${sx}" y2="${r.height}" stroke="#ffffff" stroke-opacity="0.06"/>`;}
+      for(let wy=startY; ;wy+=ppm){const [,sy]=toScreen(0,wy);if(sy>r.height)break;if(sy<0)continue;out+=`<line x1="0" y1="${sy}" x2="${r.width}" y2="${sy}" stroke="#ffffff" stroke-opacity="0.06"/>`;}
+    }
+  }
+  // calibration in-progress line
+  if(calib.active && calib.p1){
+    const [x1,y1]=toScreen(calib.p1[0],calib.p1[1]);
+    const p2= calib.p2 || (calib.hover||calib.p1);
+    const [x2,y2]=toScreen(p2[0],p2[1]);
+    out+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#4c9aff" stroke-width="2" stroke-dasharray="6 4"/>`;
+    out+=dot(x1,y1)+dot(x2,y2);
+  }
+  svg.innerHTML=out;
+}
+const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="5" fill="#4c9aff" stroke="#fff" stroke-width="1.5"/>`;
+
+function renderItems(){
+  itemsEl.innerHTML='';
+  if(!ppm)return;
+  for(const it of items){
+    const [cx,cy]=toScreen(it.cx,it.cy);
+    const w=it.w*ppm*view.zoom, h=it.h*ppm*view.zoom;
+    const el=document.createElement('div');
+    el.className='item'+(it.id===selId?' sel':'');
+    el.style.setProperty('--c',it.color);
+    el.style.left=cx+'px'; el.style.top=cy+'px';
+    el.style.width=w+'px'; el.style.height=h+'px';
+    el.style.transform=`translate(-50%,-50%) rotate(${it.rot}deg)`;
+    el.dataset.id=it.id;
+    const wc=Math.round(it.w*100), hc=Math.round(it.h*100);
+    el.innerHTML=`<div class="lbl">${it.label||it.type}<br>${wc}×${hc}</div>`;
+    if(it.id===selId){
+      el.innerHTML+=`<div class="rotstem"></div>
+        <div class="handle h-rot" data-role="rot"></div>
+        <div class="handle h-res" data-role="res" style="right:-7px;bottom:-7px"></div>
+        <div class="handle h-res" data-role="res-tl" style="left:-7px;top:-7px;cursor:nwse-resize"></div>`;
+    }
+    itemsEl.appendChild(el);
+  }
+}
+
+function renderRuler(){
+  const rl=$('#ruler');
+  if(!ppm){rl.style.display='none';return;}
+  rl.style.display='block';
+  // choose a "nice" length whose pixel width is 60-160px
+  const targets=[0.1,0.25,0.5,1,2,3,5,10];
+  let best=1;
+  for(const t of targets){const px=t*ppm*view.zoom;if(px>=60&&px<=170){best=t;break;}best=t;}
+  const px=Math.round(best*ppm*view.zoom);
+  $('#rulerBar').style.width=px+'px';
+  $('#rulerLabel').textContent= best>=1? best+' m' : (best*100)+' cm';
+}
+
+/* ---------- calibration ---------- */
+const calib={active:false,p1:null,p2:null,hover:null};
+function startCalib(){
+  if(!img){alert('Upload a plan image first.');return;}
+  calib.active=true;calib.p1=null;calib.p2=null;
+  stageWrap.classList.add('calib');
+  $('#calibBanner').style.display='flex';
+  $('#calibText').textContent='Click the FIRST end of a known dimension';
+  $('#calibBtn').classList.add('on');
+  render();
+}
+function cancelCalib(){
+  calib.active=false;calib.p1=null;calib.p2=null;
+  stageWrap.classList.remove('calib');
+  $('#calibBanner').style.display='none';
+  $('#calibBtn').classList.remove('on');
+  render();
+}
+$('#calibBtn').onclick=()=>calib.active?cancelCalib():startCalib();
+$('#calibCancel').onclick=cancelCalib;
+
+function calibClick(sx,sy){
+  const w=toWorld(sx,sy);
+  if(!calib.p1){calib.p1=w;$('#calibText').textContent='Click the SECOND end';render();}
+  else{calib.p2=w;render();askDistance();}
+}
+function askDistance(){
+  if(document.querySelector('.modal-bg'))return; // never stack modals
+  const bg=document.createElement('div');bg.className='modal-bg';
+  bg.innerHTML=`<div class="modal">
+    <h3>Set the real length</h3>
+    <p>How long is the line you just drew, in real life?</p>
+    <div class="inline">
+      <input class="num" id="mDist" type="number" step="0.01" style="flex:1;width:auto" placeholder="e.g. 3.2" autofocus>
+      <select id="mUnit"><option value="m">m</option><option value="cm">cm</option></select>
+    </div>
+    <div class="row2">
+      <button class="btn ghost" id="mCancel">Cancel</button>
+      <button class="btn primary" id="mOk">Set scale</button>
+    </div></div>`;
+  document.body.appendChild(bg);                        // outside the stage
+  bg.addEventListener('pointerdown',e=>e.stopPropagation()); // don't leak to canvas
+  const inp=bg.querySelector('#mDist');
+  setTimeout(()=>inp.focus(),0);
+  const close=()=>{bg.remove();document.removeEventListener('keydown',onKey,true);};
+  const finish=()=>{
+    let v=parseFloat(inp.value);
+    const u=bg.querySelector('#mUnit').value;
+    if(!v||v<=0){inp.style.borderColor='var(--danger)';inp.focus();return;}
+    if(u==='cm')v/=100;
+    const pxDist=Math.hypot(calib.p2[0]-calib.p1[0],calib.p2[1]-calib.p1[1]);
+    ppm=pxDist/v;
+    close();cancelCalib();
+    updateScaleTag();
+    $('#topHint').textContent='Add furniture from the panel →';
+    render();
+  };
+  const onKey=e=>{
+    if(e.key==='Enter'){e.preventDefault();e.stopPropagation();finish();}
+    else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();cancelCalib();}
+  };
+  document.addEventListener('keydown',onKey,true);
+  bg.querySelector('#mOk').onclick=finish;
+  bg.querySelector('#mCancel').onclick=()=>{close();cancelCalib();};
+}
+function updateScaleTag(){
+  const t=$('#scaleTag');
+  if(ppm){t.classList.remove('unset');$('#scaleVal').textContent=(ppm).toFixed(1)+' px/m';}
+  else{t.classList.add('unset');$('#scaleVal').textContent='not set';}
+}
+
+/* ---------- add furniture ---------- */
+function buildPalette(){
+  const p=$('#palette');p.innerHTML='';
+  for(const preset of PRESETS){
+    const b=document.createElement('button');b.className='pbtn';
+    b.innerHTML=`<span class="pn"><span class="dot" style="background:${preset.c}"></span>${preset.type}</span><span class="pd">${preset.w}×${preset.h} cm</span>`;
+    b.onclick=()=>addItem(preset);
+    p.appendChild(b);
+  }
+}
+function addItem(preset){
+  if(!ppm){alert('Calibrate the scale first — otherwise sizes are meaningless.');return;}
+  const r=stageWrap.getBoundingClientRect();
+  const [cx,cy]=toWorld(r.width/2,r.height/2);
+  const it={id:uid++,type:preset.type,cx,cy,w:preset.w/100,h:preset.h/100,rot:0,color:preset.c,label:''};
+  items.push(it);selId=it.id;render();refreshInspector();
+}
+$('#wallBtn').onclick=()=>addItem({type:'Wall',w:300,h:10,c:'#8b98a8'});
+
+/* ---------- pointer interactions ---------- */
+let drag=null; // {mode,...}
+stageWrap.addEventListener('pointerdown',e=>{
+  if(document.querySelector('.modal-bg'))return; // modal open — ignore canvas
+  const [sx,sy]=stagePt(e);
+  if(calib.active){calibClick(sx,sy);return;}
+  const handle=e.target.closest('.handle');
+  const itemEl=e.target.closest('.item');
+  if(handle){
+    const it=items.find(i=>i.id===selId);if(!it)return;
+    const role=handle.dataset.role;
+    stageWrap.setPointerCapture(e.pointerId);
+    if(role==='rot'){drag={mode:'rot',it,startAng:it.rot,ptr0:toWorld(sx,sy)};}
+    else{
+      // resize: fixed = opposite corner in world
+      const sign = role==='res'? [1,1] : [-1,-1]; // which corner grabbed (local)
+      const a=it.rot*Math.PI/180;
+      const halfW=it.w*ppm/2, halfH=it.h*ppm/2;
+      const fixLocal=[-sign[0]*halfW,-sign[1]*halfH];
+      const fr=rot(fixLocal[0],fixLocal[1],a);
+      const fixedWorld=[it.cx+fr[0],it.cy+fr[1]];
+      drag={mode:'res',it,sign,fixedWorld,a};
+    }
+    e.preventDefault();return;
+  }
+  if(itemEl){
+    const id=+itemEl.dataset.id;const it=items.find(i=>i.id===id);
+    selId=id;refreshInspector();
+    stageWrap.setPointerCapture(e.pointerId);
+    drag={mode:'move',it,ptr0:toWorld(sx,sy),c0:[it.cx,it.cy]};
+    render();e.preventDefault();return;
+  }
+  // background -> deselect + pan
+  if(selId!==null){selId=null;refreshInspector();render();}
+  stageWrap.setPointerCapture(e.pointerId);
+  stageWrap.classList.add('panning');
+  drag={mode:'pan',s0:[sx,sy],v0:[view.x,view.y]};
+});
+
+stageWrap.addEventListener('pointermove',e=>{
+  const [sx,sy]=stagePt(e);
+  if(calib.active && calib.p1 && !calib.p2){calib.hover=toWorld(sx,sy);render();return;}
+  if(!drag)return;
+  if(drag.mode==='pan'){view.x=drag.v0[0]+(sx-drag.s0[0]);view.y=drag.v0[1]+(sy-drag.s0[1]);render();return;}
+  const [wx,wy]=toWorld(sx,sy);
+  if(drag.mode==='move'){
+    drag.it.cx=drag.c0[0]+(wx-drag.ptr0[0]);
+    drag.it.cy=drag.c0[1]+(wy-drag.ptr0[1]);
+    render();refreshInspectorLive();
+  }else if(drag.mode==='rot'){
+    const a0=Math.atan2(drag.ptr0[1]-drag.it.cy,drag.ptr0[0]-drag.it.cx);
+    const a1=Math.atan2(wy-drag.it.cy,wx-drag.it.cx);
+    let deg=drag.startAng+(a1-a0)*180/Math.PI;
+    if(e.shiftKey)deg=Math.round(deg/15)*15;
+    drag.it.rot=Math.round(deg*10)/10;
+    render();refreshInspectorLive();
+  }else if(drag.mode==='res'){
+    const it=drag.it;
+    // vector fixed->pointer, rotate into local frame
+    const dx=wx-drag.fixedWorld[0], dy=wy-drag.fixedWorld[1];
+    const lv=rot(dx,dy,-drag.a);
+    const newWpx=Math.max(6,Math.abs(lv[0])), newHpx=Math.max(6,Math.abs(lv[1]));
+    it.w=newWpx/ppm; it.h=newHpx/ppm;
+    // new center = fixedWorld + R(a)*( sign * (newW/2,newH/2) )
+    const half=[drag.sign[0]*newWpx/2, drag.sign[1]*newHpx/2];
+    const rr=rot(half[0],half[1],drag.a);
+    it.cx=drag.fixedWorld[0]+rr[0]; it.cy=drag.fixedWorld[1]+rr[1];
+    render();refreshInspectorLive();
+  }
+});
+function endDrag(e){
+  if(drag){stageWrap.classList.remove('panning');try{stageWrap.releasePointerCapture(e.pointerId);}catch(_){}}
+  drag=null;
+}
+stageWrap.addEventListener('pointerup',endDrag);
+stageWrap.addEventListener('pointercancel',endDrag);
+
+/* ---------- inspector ---------- */
+function buildSwatches(){
+  const s=$('#swatches');s.innerHTML='';
+  for(const c of COLORS){const d=document.createElement('div');d.className='sw';d.style.background=c;d.dataset.c=c;
+    d.onclick=()=>{const it=cur();if(it){it.color=c;render();refreshInspector();}};s.appendChild(d);}
+}
+const cur=()=>items.find(i=>i.id===selId);
+function refreshInspector(){
+  const it=cur();
+  $('#noSel').style.display=it?'none':'block';
+  $('#selBody').style.display=it?'block':'none';
+  if(!it)return;
+  $('#iLabel').value=it.label;
+  $('#iW').value=Math.round(it.w*100);
+  $('#iH').value=Math.round(it.h*100);
+  $('#iR').value=Math.round(it.rot);
+  [...$('#swatches').children].forEach(d=>d.classList.toggle('on',d.dataset.c===it.color));
+}
+function refreshInspectorLive(){ // during drag: update numbers only, no focus steal
+  const it=cur();if(!it)return;
+  if(document.activeElement!==$('#iW'))$('#iW').value=Math.round(it.w*100);
+  if(document.activeElement!==$('#iH'))$('#iH').value=Math.round(it.h*100);
+  if(document.activeElement!==$('#iR'))$('#iR').value=Math.round(it.rot);
+}
+$('#iLabel').addEventListener('input',e=>{const it=cur();if(it){it.label=e.target.value;render();}});
+$('#iW').addEventListener('input',e=>{const it=cur();const v=parseFloat(e.target.value);if(it&&v>0){it.w=v/100;render();}});
+$('#iH').addEventListener('input',e=>{const it=cur();const v=parseFloat(e.target.value);if(it&&v>0){it.h=v/100;render();}});
+$('#iR').addEventListener('input',e=>{const it=cur();const v=parseFloat(e.target.value);if(it&&!isNaN(v)){it.rot=v;render();}});
+$('#dupBtn').onclick=()=>{const it=cur();if(!it)return;const n={...it,id:uid++,cx:it.cx+0.3*(ppm?1:1)/1,label:it.label};n.cx=it.cx+ (0.3);n.cy=it.cy+0.3;items.push(n);selId=n.id;render();refreshInspector();};
+$('#delBtn').onclick=delSel;
+function delSel(){if(selId===null)return;items=items.filter(i=>i.id!==selId);selId=null;render();refreshInspector();}
+
+/* ---------- toolbar misc ---------- */
+$('#gridBtn').onclick=()=>{showGrid=!showGrid;$('#gridBtn').classList.toggle('on',showGrid);render();};
+$('#panelBtn').onclick=()=>$('#inspector').classList.toggle('hidden');
+$('#clearBtn').onclick=()=>{if(items.length&&confirm('Remove all furniture?')){items=[];selId=null;render();refreshInspector();}};
+
+/* ---------- keyboard ---------- */
+window.addEventListener('keydown',e=>{
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  if(calib.active&&e.key==='Escape'){cancelCalib();return;}
+  const it=cur();if(!it)return;
+  const step=e.shiftKey?0.01:0.05; // meters (world), scaled below actually in world px
+  const nudge=(dx,dy)=>{it.cx+=dx;it.cy+=dy;render();};
+  const px=(ppm?0.05*ppm:5); // 5cm nudge in world px
+  const bpx=(ppm?0.01*ppm:1);
+  const d=e.shiftKey?bpx:px;
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();delSel();}
+  else if(e.key==='r'||e.key==='R'){it.rot=(it.rot+90)%360;render();refreshInspector();}
+  else if(e.key==='ArrowLeft'){e.preventDefault();nudge(-d,0);}
+  else if(e.key==='ArrowRight'){e.preventDefault();nudge(d,0);}
+  else if(e.key==='ArrowUp'){e.preventDefault();nudge(0,-d);}
+  else if(e.key==='ArrowDown'){e.preventDefault();nudge(0,d);}
+});
+
+/* ---------- export PNG ---------- */
+$('#exportBtn').onclick=()=>{
+  if(!img){alert('Nothing to export yet.');return;}
+  const c=document.createElement('canvas');c.width=img.w;c.height=img.h;
+  const ctx=c.getContext('2d');
+  const im=new Image();
+  im.onload=()=>{
+    ctx.drawImage(im,0,0);
+    for(const it of items){
+      const wpx=it.w*ppm, hpx=it.h*ppm;
+      ctx.save();ctx.translate(it.cx,it.cy);ctx.rotate(it.rot*Math.PI/180);
+      ctx.fillStyle=hexA(it.color,.28);ctx.strokeStyle=it.color;ctx.lineWidth=Math.max(2,2/view.zoom);
+      ctx.fillRect(-wpx/2,-hpx/2,wpx,hpx);ctx.strokeRect(-wpx/2,-hpx/2,wpx,hpx);
+      ctx.fillStyle='#fff';ctx.font=`${Math.max(12,hpx*0.14)}px monospace`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=4;
+      const lbl=(it.label||it.type)+'  '+Math.round(it.w*100)+'×'+Math.round(it.h*100);
+      ctx.fillText(lbl,0,0);ctx.restore();
+    }
+    c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='floorplan.png';a.click();});
+  };
+  im.src=planImg.src;
+};
+function hexA(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+
+/* ---------- init ---------- */
+buildPalette();buildSwatches();updateScaleTag();refreshInspector();
+window.addEventListener('resize',()=>render());
+render();
+})();
+</script>
+</body>
+</html>
