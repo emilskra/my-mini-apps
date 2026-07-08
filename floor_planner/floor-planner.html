@@ -118,6 +118,19 @@
     color:#fff;padding:9px 16px;border-radius:20px;font-size:12.5px;display:none;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
   #calibBanner .x{cursor:pointer;opacity:.85;font-weight:700}
 
+  #projBtn b{font-weight:600;color:var(--accent);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .projList{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto;margin-bottom:6px}
+  .projRow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;
+    border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+  .projRow.active{border-color:var(--accent);background:#232d3b}
+  .projRow .pName{flex:1;min-width:0;font-size:13px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .projRow.active .pName{color:var(--accent)}
+  .projRow .pMeta{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-left:8px;flex:none}
+  .projRow .pActs{display:flex;gap:2px;flex:none}
+  .iconbtn{border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;
+    border-radius:6px;padding:3px 7px;font-size:12.5px;line-height:1}
+  .iconbtn:hover{background:var(--bg);color:var(--ink)}
+
   .fileInput{position:fixed;left:-10000px;top:0;width:1px;height:1px;opacity:0}
   @media (max-width:720px){
     aside{position:absolute;right:0;top:0;bottom:0;z-index:25;box-shadow:-8px 0 24px rgba(0,0,0,.4)}
@@ -129,6 +142,8 @@
 <div id="app">
   <header>
     <div class="brand">📐 <b>Floor</b><span class="full">Planner</span></div>
+    <div class="sep"></div>
+    <button class="btn" id="projBtn" title="Projects">📁 <b id="projName">Plan</b> <span style="opacity:.55">▾</span></button>
     <div class="sep"></div>
     <button class="btn" id="uploadBtn">Upload plan</button>
     <button class="btn" id="calibBtn">Calibrate scale</button>
@@ -222,6 +237,9 @@ let items=[];                       // {id,type,cx,cy,w,h(meters),rot,color,labe
 let selId=null;
 let showGrid=false;
 let uid=1;
+let imgURL=null;                    // data URL of current plan image (kept for persistence)
+let PID=null;                       // active project id
+let projectName='Plan';
 
 const COLORS=['#4c9aff','#3fb950','#e3b341','#f0603a','#a371f7','#f778ba','#39c5cf','#c9d1d9'];
 
@@ -259,10 +277,12 @@ function loadImage(file){
     const im=new Image();
     im.onload=()=>{
       img={w:im.naturalWidth,h:im.naturalHeight};
+      imgURL=url;
       planImg.src=url;
       $('#empty').style.display='none';
       fitView();
       $('#topHint').textContent = ppm? 'Add furniture from the panel →' : 'Now calibrate the scale using a known measurement';
+      saveImage(url);
       render();
     };
     im.onerror=()=>alert('That image could not be loaded. Try another file.');
@@ -309,6 +329,7 @@ function render(){
   renderSVG();
   renderItems();
   renderRuler();
+  scheduleSave();
 }
 
 function renderSVG(){
@@ -620,10 +641,161 @@ $('#exportBtn').onclick=()=>{
 };
 function hexA(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
 
+/* ---------- persistence (localStorage) ---------- */
+const IDXKEY='fp.index';
+const SKEY=id=>'fp.state.'+id;
+const IKEY=id=>'fp.img.'+id;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const genId=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+let quotaWarned=false;
+function warnQuota(err){
+  const q = err && (err.name==='QuotaExceededError' || err.code===22 || /quota/i.test(err.message||''));
+  if(q && !quotaWarned){quotaWarned=true;
+    alert('Browser storage is full — this plan may not be fully saved. Plan images take a lot of space; try deleting old projects.');}
+}
+
+function loadIndex(){
+  try{const raw=localStorage.getItem(IDXKEY);if(raw)return JSON.parse(raw);}catch(_){}
+  return {activeId:null,list:[]};
+}
+function saveIndex(idx){try{localStorage.setItem(IDXKEY,JSON.stringify(idx));}catch(e){warnQuota(e);}}
+
+function serialize(){
+  return {name:projectName,hasImg:!!img,imgW:img?img.w:0,imgH:img?img.h:0,
+    ppm,items,view,showGrid,count:items.length};
+}
+let saveTimer=null;
+function scheduleSave(){if(!PID)return;clearTimeout(saveTimer);saveTimer=setTimeout(saveStateNow,500);}
+function saveStateNow(){
+  if(!PID)return;clearTimeout(saveTimer);
+  try{localStorage.setItem(SKEY(PID),JSON.stringify(serialize()));}catch(e){warnQuota(e);}
+}
+function saveImage(url){if(!PID)return;try{localStorage.setItem(IKEY(PID),url);}catch(e){warnQuota(e);}}
+
+/* ---------- projects ---------- */
+function createProject(name){
+  const idx=loadIndex();
+  const id=genId();
+  const nm=(name&&name.trim())||('Plan '+(idx.list.length+1));
+  idx.list.push({id,name:nm});idx.activeId=id;saveIndex(idx);
+  try{localStorage.setItem(SKEY(id),JSON.stringify(
+    {name:nm,hasImg:false,imgW:0,imgH:0,ppm:null,items:[],view:{x:0,y:0,zoom:1},showGrid:false,count:0}));
+  }catch(e){warnQuota(e);}
+  return {id,name:nm};
+}
+function loadProject(id){
+  PID=id;
+  let st=null;try{const raw=localStorage.getItem(SKEY(id));if(raw)st=JSON.parse(raw);}catch(_){}
+  // reset all live state
+  items=[];selId=null;ppm=null;img=null;imgURL=null;view={x:0,y:0,zoom:1};showGrid=false;projectName='Plan';
+  if(st){
+    projectName=st.name||'Plan';
+    ppm=(st.ppm!=null)?st.ppm:null;
+    items=Array.isArray(st.items)?st.items:[];
+    if(st.view)view=st.view;
+    showGrid=!!st.showGrid;
+  }
+  uid=items.reduce((m,i)=>Math.max(m,i.id||0),0)+1;
+  const stored=localStorage.getItem(IKEY(id));
+  if(stored && st && st.hasImg){
+    img={w:st.imgW,h:st.imgH};imgURL=stored;planImg.src=stored;
+    $('#empty').style.display='none';
+  }else{
+    planImg.removeAttribute('src');
+    $('#empty').style.display='';
+  }
+  $('#gridBtn').classList.toggle('on',showGrid);
+  $('#projName').textContent=projectName;
+  updateScaleTag();refreshInspector();updateTopHint();render();
+}
+function switchProject(id){
+  saveStateNow();
+  const idx=loadIndex();idx.activeId=id;saveIndex(idx);
+  loadProject(id);
+}
+function renameProject(id,name){
+  const idx=loadIndex();const p=idx.list.find(x=>x.id===id);if(p){p.name=name;saveIndex(idx);}
+  if(id===PID){projectName=name;$('#projName').textContent=name;saveStateNow();}
+  else{try{const raw=localStorage.getItem(SKEY(id));if(raw){const st=JSON.parse(raw);st.name=name;localStorage.setItem(SKEY(id),JSON.stringify(st));}}catch(_){}}
+}
+function deleteProject(id){
+  const idx=loadIndex();
+  idx.list=idx.list.filter(p=>p.id!==id);
+  try{localStorage.removeItem(SKEY(id));localStorage.removeItem(IKEY(id));}catch(_){}
+  if(idx.activeId===id)idx.activeId=idx.list[0]?idx.list[0].id:null;
+  saveIndex(idx);
+  if(id===PID){
+    if(idx.activeId)loadProject(idx.activeId);
+    else{const p=createProject('My plan');loadProject(p.id);}
+  }
+}
+function updateTopHint(){
+  $('#topHint').textContent = !img ? 'Upload a plan screenshot to start'
+    : (ppm ? 'Add furniture from the panel →' : 'Now calibrate the scale using a known measurement');
+}
+
+/* ---------- projects modal ---------- */
+function openProjects(){
+  if(document.querySelector('.modal-bg'))return;
+  const bg=document.createElement('div');bg.className='modal-bg';
+  const modal=document.createElement('div');modal.className='modal';modal.style.width='360px';
+  bg.appendChild(modal);
+  bg.addEventListener('pointerdown',e=>{if(e.target===bg)close();e.stopPropagation();});
+  document.body.appendChild(bg);
+  const onKey=e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}};
+  document.addEventListener('keydown',onKey,true);
+  function close(){bg.remove();document.removeEventListener('keydown',onKey,true);}
+  function metaFor(id){try{const st=JSON.parse(localStorage.getItem(SKEY(id))||'{}');
+    const n=st.count||0;return (st.hasImg?'plan':'empty')+(n?' · '+n+' item'+(n>1?'s':''):'');}catch(_){return '';}}
+  function draw(){
+    const idx=loadIndex();
+    const rows=idx.list.map(p=>`
+      <div class="projRow${p.id===PID?' active':''}" data-id="${p.id}">
+        <span class="pName" data-act="open">${esc(p.name)}</span>
+        <span class="pMeta">${metaFor(p.id)}</span>
+        <span class="pActs">
+          <button class="iconbtn" data-act="rename" title="Rename">✎</button>
+          <button class="iconbtn" data-act="del" title="Delete">🗑</button>
+        </span>
+      </div>`).join('');
+    modal.innerHTML=`<h3>Projects</h3>
+      <p>Each project keeps its own plan image, scale and furniture — saved right here in your browser.</p>
+      <div class="projList">${rows}</div>
+      <div class="row2" style="margin-top:14px">
+        <button class="btn ghost" id="pClose">Close</button>
+        <button class="btn primary" id="pNew">＋ New project</button>
+      </div>`;
+    modal.querySelector('#pClose').onclick=close;
+    modal.querySelector('#pNew').onclick=()=>{const p=createProject();switchProject(p.id);draw();};
+    modal.querySelectorAll('.projRow').forEach(row=>{
+      const id=row.dataset.id;
+      row.querySelector('[data-act="open"]').onclick=()=>{if(id!==PID)switchProject(id);close();};
+      row.querySelector('[data-act="rename"]').onclick=()=>{
+        const cur=loadIndex().list.find(p=>p.id===id);
+        const name=prompt('Rename project',cur?cur.name:'');
+        if(name&&name.trim()){renameProject(id,name.trim());draw();}
+      };
+      row.querySelector('[data-act="del"]').onclick=()=>{
+        const list=loadIndex().list;
+        if(list.length<=1){alert('Keep at least one project.');return;}
+        const cur=list.find(p=>p.id===id);
+        if(confirm('Delete “'+(cur?cur.name:'this project')+'”? This cannot be undone.')){deleteProject(id);draw();}
+      };
+    });
+  }
+  draw();
+}
+$('#projBtn').onclick=openProjects;
+
 /* ---------- init ---------- */
-buildPalette();buildSwatches();updateScaleTag();refreshInspector();
+buildPalette();buildSwatches();
+let idx=loadIndex();
+if(!idx.list.length){createProject('My plan');idx=loadIndex();}
+const startId=(idx.activeId&&idx.list.some(p=>p.id===idx.activeId))?idx.activeId:idx.list[0].id;
+loadProject(startId);
 window.addEventListener('resize',()=>render());
-render();
+window.addEventListener('beforeunload',saveStateNow);
 })();
 </script>
 </body>
