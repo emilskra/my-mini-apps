@@ -1,2 +1,5 @@
 .DS_Store
 *.log
+
+# Personal résumé data — kept local, not published
+resume_builder/emil-resume.json
