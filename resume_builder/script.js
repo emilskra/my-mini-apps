@@ -477,7 +477,123 @@ document.getElementById("btn-export").addEventListener("click", () => {
   URL.revokeObjectURL(a.href);
 });
 
-document.getElementById("btn-import").addEventListener("click", () => fileImport.click());
+/* ---------------- import (modal: paste JSON, copy AI format, or file) ---------------- */
+
+const IMPORT_TEMPLATE = `{
+  "name": "Jane Smith",
+  "location": "Berlin, Germany",
+  "phone": "+49 30 1234567",
+  "email": "jane@example.com",
+  "linkedin": "linkedin.com/in/janesmith",
+  "github": "github.com/janesmith",
+  "website": "janesmith.dev",
+  "summary": "One or two sentences about you. Use **bold** for emphasis.",
+  "experience": [
+    {
+      "company": "Acme Corp",
+      "role": "Senior Software Engineer",
+      "dates": "2022 -- Present",
+      "bullets": "Shipped **X** that improved Y by 30%\\nLed a team of 4 engineers\\nSee [the project](https://example.com)"
+    }
+  ],
+  "education": [
+    {
+      "school": "State University",
+      "location": "City, Country",
+      "degree": "BSc, Computer Science",
+      "dates": "2013 -- 2017"
+    }
+  ],
+  "skills": [
+    { "label": "Backend", "value": "Python, FastAPI, PostgreSQL" },
+    { "label": "Languages", "value": "English (Native), German (B2)" }
+  ]
+}`;
+
+const AI_PROMPT =
+  "Here is a résumé in JSON. Fill it in from my CV, keeping the exact keys and structure.\n" +
+  "- \"bullets\" is a single string with each bullet on its own line (use \\n between bullets).\n" +
+  "- Optional markup: **bold**, *italic*, [text](url), -- for an en dash, --- for an em dash.\n" +
+  "- Leave a field as an empty string \"\" if unknown. Return only valid JSON, no extra text.\n\n" +
+  IMPORT_TEMPLATE +
+  "\n\nMy CV:\n[paste your CV here]";
+
+const importModal = document.getElementById("import-modal");
+const importText = document.getElementById("import-textarea");
+const importErr = document.getElementById("import-err");
+
+function showImportErr(msg) { importErr.textContent = msg; importErr.hidden = false; }
+function hideImportErr() { importErr.hidden = true; importErr.textContent = ""; }
+
+function openImport() {
+  document.getElementById("import-template").textContent = IMPORT_TEMPLATE;
+  importText.value = "";
+  hideImportErr();
+  importModal.hidden = false;
+  document.addEventListener("keydown", onImportKey, true);
+  setTimeout(() => importText.focus(), 0);
+}
+function closeImport() {
+  importModal.hidden = true;
+  document.removeEventListener("keydown", onImportKey, true);
+}
+function onImportKey(e) { if (e.key === "Escape") { e.preventDefault(); closeImport(); } }
+
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_) { /* fall through to legacy copy */ }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (_) { return false; }
+}
+
+function applyImport() {
+  const raw = importText.value.trim();
+  if (!raw) { showImportErr("Paste some JSON first, or use “choose file…” below."); return; }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    showImportErr("That isn't valid JSON — " + err.message);
+    return;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    showImportErr("Expected a JSON object shaped like the format above.");
+    return;
+  }
+  resetTo(normalize(parsed));
+  closeImport();
+}
+
+document.getElementById("btn-import").addEventListener("click", openImport);
+document.getElementById("import-close").addEventListener("click", closeImport);
+document.getElementById("import-cancel").addEventListener("click", closeImport);
+document.getElementById("import-apply").addEventListener("click", applyImport);
+importModal.addEventListener("click", (e) => { if (e.target === importModal) closeImport(); });
+importText.addEventListener("input", hideImportErr);
+
+document.getElementById("import-copy").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  const prev = btn.dataset.label || (btn.dataset.label = btn.textContent);
+  const ok = await copyText(AI_PROMPT);
+  btn.textContent = ok ? "✓ copied" : "copy failed";
+  setTimeout(() => { btn.textContent = prev; }, 1400);
+});
+
+document.getElementById("import-file").addEventListener("click", () => fileImport.click());
 fileImport.addEventListener("change", () => {
   const file = fileImport.files[0];
   fileImport.value = "";
@@ -486,8 +602,9 @@ fileImport.addEventListener("change", () => {
   reader.onload = () => {
     try {
       resetTo(normalize(JSON.parse(reader.result)));
+      closeImport();
     } catch (_) {
-      alert("That file doesn't look like a résumé JSON export.");
+      showImportErr("That file doesn't look like a résumé JSON export.");
     }
   };
   reader.readAsText(file);

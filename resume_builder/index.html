@@ -111,6 +111,49 @@
 
   </main>
 
+  <!-- ============ IMPORT MODAL ============ -->
+  <div class="modal-bg" id="import-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
+      <div class="modal-head">
+        <h2 id="import-title">\import{json}</h2>
+        <button class="modal-x" id="import-close" type="button" title="Close" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-lead">
+          Paste résumé JSON below and hit import — or copy the format, ask an AI
+          (Claude, ChatGPT, …) to fill it in from your CV, then paste the result back here.
+        </p>
+
+        <div class="modal-sec">
+          <div class="modal-sec-head">
+            <span>expected format</span>
+            <button class="btn" id="import-copy" type="button">copy for AI</button>
+          </div>
+          <pre class="code" id="import-template"></pre>
+          <p class="modal-hint">
+            <code>bullets</code> is one string with each bullet on its own line.
+            Markup: <code>**bold**</code> · <code>*italic*</code> · <code>[text](url)</code> ·
+            <code>--</code> → – · <code>---</code> → —
+          </p>
+        </div>
+
+        <div class="modal-sec">
+          <div class="modal-sec-head"><span>paste your json</span></div>
+          <textarea id="import-textarea" placeholder="{ … }" spellcheck="false" autocomplete="off"></textarea>
+          <div class="modal-err" id="import-err" hidden></div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="import-file" type="button">choose file…</button>
+        <span class="modal-spacer"></span>
+        <button class="btn" id="import-cancel" type="button">cancel</button>
+        <button class="btn btn-primary" id="import-apply" type="button">import</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
