@@ -1,0 +1,505 @@
+/* ================================================================
+   Resume Typesetter — source on the left, typeset paper on the right
+   ================================================================ */
+
+:root {
+  --bg: #141109;
+  --panel: #1c1812;
+  --panel-2: #211c14;
+  --field: #100d08;
+  --line: #332c1f;
+  --line-2: #473d2a;
+  --text: #efe7d2;
+  --dim: #a2977c;
+  --faint: #6f6650;
+  --accent: #ff5a2c;
+  --accent-deep: #cf3b1e;
+  --desk: #4b4740;
+  --ff-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --ff-display: "Fraunces", Georgia, serif;
+  --toolbar-h: 54px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ---------------- toolbar ---------------- */
+
+.toolbar {
+  height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #1e1a12, #17130c);
+}
+
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.wm-name {
+  font-family: var(--ff-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 21px;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+.wm-ext {
+  font-family: var(--ff-mono);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--accent);
+  margin-left: 2px;
+}
+.wm-caret {
+  width: 7px;
+  height: 15px;
+  margin-left: 5px;
+  background: var(--accent);
+  align-self: center;
+  animation: blink 1.1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .wm-caret { animation: none; } }
+
+.wm-sub {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.save-state {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  white-space: nowrap;
+}
+.save-state.on { opacity: 1; }
+
+.toolbar-actions { display: flex; gap: 8px; }
+
+.btn {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  padding: 7px 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.btn:hover { color: var(--accent); border-color: var(--accent); }
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(180deg, #e8511f, var(--accent-deep));
+  border-color: var(--accent-deep);
+}
+.btn-primary:hover {
+  color: #fff;
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #f65e2b, #d94420);
+}
+
+/* ---------------- layout ---------------- */
+
+.app {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  height: calc(100vh - var(--toolbar-h));
+}
+
+/* ---------------- editor (the "source") ---------------- */
+
+.editor {
+  overflow-y: auto;
+  padding: 18px 18px 40px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+.editor::-webkit-scrollbar { width: 8px; }
+.editor::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+
+.f-sec {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.f-sec:first-child { margin-top: 4px; }
+.f-sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.pct { color: var(--accent); font-weight: 600; }
+
+.f-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.span2 { grid-column: span 2; }
+
+.f-field { display: block; min-width: 0; }
+.f-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 5px;
+}
+.f-opt { text-transform: none; letter-spacing: 0.02em; }
+
+input[type="text"], textarea {
+  width: 100%;
+  font-family: var(--ff-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input[type="text"]:focus, textarea:focus {
+  border-color: var(--accent-deep);
+  box-shadow: 0 0 0 3px rgba(207, 59, 30, 0.18);
+}
+input::placeholder, textarea::placeholder { color: #574e3c; }
+textarea { resize: none; overflow: hidden; display: block; }
+
+/* ---------------- list entries ---------------- */
+
+.entry {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  margin-bottom: 10px;
+}
+.entry summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.entry summary::-webkit-details-marker { display: none; }
+.entry summary::before {
+  content: "▸";
+  font-size: 10px;
+  color: var(--faint);
+  transition: transform 0.2s ease;
+}
+.entry[open] summary::before { transform: rotate(90deg); color: var(--accent); }
+.entry-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+.entry-title .muted { color: var(--faint); font-weight: 400; }
+
+.entry-controls { display: flex; gap: 4px; }
+.btn-ic {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--faint);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.btn-ic:hover { color: var(--accent); border-color: var(--line-2); }
+.btn-ic:disabled { opacity: 0.3; pointer-events: none; }
+
+.entry-body {
+  padding: 4px 10px 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+/* skill rows — flat, no details */
+.skill-row {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 8px;
+  align-items: start;
+  margin-bottom: 8px;
+}
+.skill-row .entry-controls { padding-top: 5px; }
+
+.btn-add {
+  width: 100%;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  background: transparent;
+  border: 1px dashed var(--line-2);
+  border-radius: 8px;
+  padding: 9px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.btn-add:hover { color: var(--accent); border-color: var(--accent-deep); }
+
+.hint {
+  margin-top: 30px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 10.5px;
+  line-height: 1.8;
+  color: var(--faint);
+}
+.hint-title {
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+.hint code {
+  color: var(--dim);
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+}
+
+/* ---------------- desk (the "output") ---------------- */
+
+.desk {
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 36px 28px 60px;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 60%),
+    radial-gradient(100% 100% at 50% 110%, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 55%),
+    var(--desk);
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.35) transparent;
+}
+.desk::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none; opacity: 0.05; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.scaler { position: relative; flex-shrink: 0; }
+
+.sheet {
+  width: 8.5in;
+  min-height: 11in;
+  padding: 0.36in 0.3in 0.4in;
+  background: #fff;
+  color: #000;
+  transform-origin: 0 0;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    0 24px 60px rgba(0, 0, 0, 0.38);
+  position: relative;
+}
+
+.break-marker {
+  position: absolute;
+  left: -0.2in; right: -0.2in;
+  border-top: 1.5px dashed rgba(207, 59, 30, 0.55);
+  pointer-events: none;
+}
+.break-marker::after {
+  content: "page break";
+  position: absolute;
+  right: 0;
+  top: -18px;
+  font-family: var(--ff-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+}
+
+/* ================================================================
+   The résumé itself — faithful to resume.tex
+   (Roboto sfdefault, 11pt, \scshape sections with \titlerule)
+   ================================================================ */
+
+.sheet {
+  font-family: "Roboto", Helvetica, Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.17;
+}
+.sheet a { color: #000; text-decoration: none; }
+.sheet a.u { text-decoration: underline; }
+.sheet a:hover { text-decoration: underline; }
+.sheet strong { font-weight: 700; }
+
+.r-name {
+  text-align: center;
+  font-size: 25pt;
+  font-weight: 700;
+  font-variant: small-caps;
+  line-height: 1.05;
+}
+.r-name.ph { color: #b5b5b5; }
+
+.r-contact {
+  text-align: center;
+  font-size: 10pt;
+  margin-top: 2pt;
+}
+.r-sep { padding: 0 2pt; }
+
+.r-sec {
+  font-variant: small-caps;
+  font-size: 12.5pt;
+  line-height: 1.1;
+  margin: 8pt 0 3pt;
+  padding-bottom: 2pt;
+  border-bottom: 0.8pt solid #000;
+}
+
+.r-small, .r-summary { font-size: 10pt; }
+.r-summary { margin-top: 1pt; }
+
+.r-job, .r-edu { padding-left: 0.14in; margin-top: 4pt; }
+.r-job:first-of-type, .r-edu:first-of-type { margin-top: 2pt; }
+
+.r-jobhead {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+}
+.r-co { font-weight: 700; text-decoration: underline; text-underline-offset: 2.5pt; }
+.r-role { font-style: italic; font-size: 10pt; }
+.r-dates { margin-left: auto; font-weight: 700; text-align: right; white-space: nowrap; flex-shrink: 0; }
+
+.r-ul {
+  list-style: none;
+  margin: 1.5pt 0 0;
+  padding-left: 0.3in;
+}
+.r-ul li {
+  position: relative;
+  font-size: 10pt;
+  margin-bottom: 1pt;
+}
+.r-ul li::before {
+  content: "•";
+  position: absolute;
+  left: -0.14in;
+  font-size: 7.5pt;
+  top: 1.5pt;
+}
+
+.r-edurow { display: flex; align-items: baseline; gap: 1em; }
+.r-edurow .right { margin-left: auto; text-align: right; white-space: nowrap; flex-shrink: 0; }
+.r-eduschool, .r-edudates { font-weight: 700; }
+.r-edudegree { font-style: italic; font-size: 10pt; }
+
+.r-skills { padding-left: 0.15in; margin-top: 1pt; }
+.r-skill { font-size: 10pt; margin-bottom: 1pt; }
+.r-skill b { font-weight: 700; }
+
+.r-empty {
+  margin-top: 1.2in;
+  text-align: center;
+  color: #b5b5b5;
+  font-size: 11pt;
+}
+
+/* ---------------- responsive ---------------- */
+
+@media (max-width: 980px) {
+  body { overflow: auto; }
+  .toolbar { height: auto; flex-wrap: wrap; padding: 10px 14px; row-gap: 8px; }
+  .save-state { display: none; }
+  .toolbar-actions { margin-left: auto; flex-wrap: wrap; }
+  .app { display: block; height: auto; }
+  .editor { border-right: none; border-bottom: 1px solid var(--line); }
+  .desk { padding: 24px 12px 48px; min-height: 70vh; }
+}
+
+/* ================================================================
+   Print — the sheet becomes the page
+   ================================================================ */
+
+@page { size: letter; margin: 0; }
+
+@media print {
+  html, body { overflow: visible; background: #fff; }
+  .toolbar, .editor, .break-marker { display: none !important; }
+  .app { display: block; height: auto; }
+  .desk {
+    display: block;
+    overflow: visible;
+    padding: 0;
+    background: none;
+  }
+  .desk::after { display: none; }
+  .scaler {
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+  }
+  .sheet {
+    transform: none !important;
+    width: auto;
+    min-height: 0;
+    box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
