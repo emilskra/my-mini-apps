@@ -8,92 +8,63 @@ const PAGE_H = 1056; // 11in at 96dpi
 /* ---------------- sample data ---------------- */
 
 const SAMPLE = {
-  name: "Emil Agamamedov",
-  location: "Tbilisi, Georgia",
-  phone: "",
-  email: "emilagamamedov@gmail.com",
-  linkedin: "linkedin.com/in/emilagamam",
-  github: "",
-  website: "",
+  name: "John Doe",
+  location: "San Francisco, CA",
+  phone: "+1 (555) 010-1234",
+  email: "john.doe@example.com",
+  linkedin: "linkedin.com/in/johndoe",
+  github: "github.com/johndoe",
+  website: "johndoe.dev",
   summary:
-    "Full-stack-leaning Python engineer and Tech Lead with 7+ years shipping production systems --- backends, data pipelines, LLM integrations, geospatial APIs, and end-to-end side products. Daily user of Claude Code; comfortable owning a feature from infra to UI.",
+    "Full-stack software engineer with 7+ years building and shipping production systems --- backends, data pipelines, and web apps. Comfortable owning a feature end-to-end, from infrastructure to UI, and mentoring the engineers around me.",
   experience: [
     {
-      company: "io.net",
-      role: "Tech Lead",
-      dates: "August 2024 -- Present",
-      bullets: [
-        "Tech leading backend API for an **AI DePIN** platform that clusters **worldwide GPU devices** to give AI researchers cheap access to large-scale compute",
-        "Built an **LLM-powered data analysis pipeline** ingesting **GitHub and Linear** activity for company-wide engineering insights, including an **evaluation harness** to score prompt and model quality across iterations",
-        "Own **payments, subscriptions, supplier payout distribution, and tokenomics** end-to-end across the platform",
-        "Oversaw **4 smart-contract projects**: **staking and co-staking for GPUs**, and **2 versions of the tokenomics implementation** with **token buybacks and token burn**",
-        "Reshaped the release process from **once a month** to **multiple deploys per day**",
-        "Drive backend architecture, code quality, and delivery cadence across the API team; lead cross-team projects aligning engineering with product stakeholders",
-      ].join("\n"),
-    },
-    {
-      company: "Monite",
+      company: "Acme Corp",
       role: "Senior Software Engineer",
-      dates: "August 2022 -- July 2024",
+      dates: "January 2022 -- Present",
       bullets: [
-        "Owned the **Account Payables** management experience, defining requirements with PMs and shaping strategic improvements from the tech side",
-        "Delivered features for the invoices service that **turned the product profitable**",
-        "Built an **OCR service** to extract invoice data from PDFs using AI tools (Metamaze, GPT-4)",
-        "Designed and implemented an **approval policies service from scratch**",
-        "As a member of the **API Council**, participated in all API decisions ([docs.monite.com/reference/base-concepts](https://docs.monite.com/reference/base-concepts)); worked on services with API versioning",
-        "Onboarded new developers; conducted 20 interviews --- **3 engineers were hired on my recommendation** and performed well",
+        "Lead backend development for a **high-traffic SaaS platform** serving **millions of requests per day**",
+        "Designed and shipped a **real-time analytics pipeline** that cut reporting latency **from minutes to seconds**",
+        "Own **billing, subscriptions, and payments** end-to-end across the product",
+        "Reshaped the release process from **weekly** to **multiple deploys per day**",
+        "Mentor a team of **4 engineers** and drive architecture, code quality, and delivery cadence",
       ].join("\n"),
     },
     {
-      company: "Whoosh",
-      role: "Senior Software Engineer",
-      dates: "October 2021 -- July 2022",
+      company: "Globex",
+      role: "Software Engineer",
+      dates: "June 2019 -- December 2021",
       bullets: [
-        "Built backend for e-scooters at the **biggest player on the Russian market**",
-        "Worked extensively with **geospatial data (PostGIS)** --- optimized spatial queries serving the live map so users saw nearby scooters **significantly faster**",
-        "Migrated highload endpoints from a Java monolith to **AWS Lambda on Python**, cutting execution time **from 5--10s to 20--30ms**",
-        "Added an **OTP authentication method by phone call**, **5x cheaper than SMS**",
-        "Developed a **Pytest autotests** project that increased application availability",
-        "Refactored and rewrote the **registration microservice on FastAPI** to support users from new countries",
-        "Drove the migration from a third-party service to an in-house ETL pipeline and new API; shaped the development methodology for serverless applications",
+        "Built and maintained **REST and GraphQL APIs** powering the company's flagship web app",
+        "Migrated a legacy monolith to **containerized microservices**, improving deploy reliability",
+        "Introduced an **automated test suite** that raised coverage from **20% to 80%**",
+        "Collaborated with product and design to ship features from spec to production ([example.com](https://example.com))",
       ].join("\n"),
     },
     {
-      company: "LeasingSolutions",
-      role: "Software Developer",
-      dates: "July 2019 -- September 2021",
+      company: "Initech",
+      role: "Junior Software Developer",
+      dates: "July 2017 -- May 2019",
       bullets: [
-        "Designed the database structure for leasing software and refactored the lease calculator framework, adding new features",
-        "Participated in the project of **transition to IFRS**",
-        "Developed large **CRM and ERP system** projects for large industries, including the **Volkswagen and Skoda** dealer and service client",
-      ].join("\n"),
-    },
-    {
-      company: "XFrame",
-      role: "Software Engineer Intern",
-      dates: "April 2018 -- June 2019",
-      bullets: [
-        "Developed a **chatbot integration** with the company's CRM, enabling work with tasks on any platform",
-        "Built a platform for **marketplaces in Telegram**",
+        "Developed internal **CRM and reporting tools** used across the sales organization",
+        "Automated recurring data-entry tasks, **saving the team several hours per week**",
       ].join("\n"),
     },
   ],
   education: [
     {
-      school: "Siberian Federal University",
-      location: "Krasnoyarsk, Russia",
+      school: "State University",
+      location: "Springfield, USA",
       degree: "Bachelor's degree, Computer Science",
-      dates: "September 2014 -- June 2018",
+      dates: "September 2013 -- June 2017",
     },
   ],
   skills: [
-    { label: "Backend & Data", value: "Python, FastAPI, PostgreSQL, PostGIS, Redis, RabbitMQ, Kafka, ETL" },
-    { label: "Cloud & Infra", value: "AWS (Lambda, EKS, CloudWatch), Docker, Kubernetes, CI/CD" },
-    { label: "AI / LLM", value: "OpenAI, Anthropic, Gemini, RAG, LLM evals, Pydantic AI, LangChain" },
-    { label: "AI Coding Tools", value: "Claude Code (daily), Codex, Cursor" },
-    { label: "Domains", value: "Geospatial / POI data, Search & IR, FinTech, Microservices" },
-    { label: "Observability", value: "Logfire, Honeycomb, Grafana" },
-    { label: "Languages", value: "English (Full Professional), Russian (Native), Georgian (Elementary)" },
+    { label: "Backend & Data", value: "Python, FastAPI, PostgreSQL, Redis, RabbitMQ, ETL" },
+    { label: "Frontend", value: "JavaScript, TypeScript, React, HTML, CSS" },
+    { label: "Cloud & Infra", value: "AWS, Docker, Kubernetes, CI/CD" },
+    { label: "Practices", value: "Testing, Code Review, Agile, Mentoring" },
+    { label: "Languages", value: "English (Native), Spanish (Conversational)" },
   ],
 };
 
@@ -302,9 +273,9 @@ function buildExperience() {
     return `<details class="entry" data-list="experience" data-i="${i}" ${openEntries.has(j) ? "open" : ""}>` +
       `<summary><span class="entry-title">${title}</span>${entryControls("experience", i, state.experience.length)}</summary>` +
       `<div class="entry-body">` +
-      field("company", "experience", i, "company", { ph: "io.net" }) +
-      field("role", "experience", i, "role", { ph: "Tech Lead" }) +
-      field("dates", "experience", i, "dates", { ph: "August 2024 -- Present", span2: true }) +
+      field("company", "experience", i, "company", { ph: "Acme Corp" }) +
+      field("role", "experience", i, "role", { ph: "Senior Software Engineer" }) +
+      field("dates", "experience", i, "dates", { ph: "January 2022 -- Present", span2: true }) +
       field("bullets — one per line", "experience", i, "bullets", { textarea: true, rows: 5, span2: true, ph: "Shipped **something impressive** that…" }) +
       `</div></details>`;
   }).join("");
@@ -322,8 +293,8 @@ function buildEducation() {
     return `<details class="entry" data-list="education" data-i="${i}" ${openEntries.has(e) ? "open" : ""}>` +
       `<summary><span class="entry-title">${title}</span>${entryControls("education", i, state.education.length)}</summary>` +
       `<div class="entry-body">` +
-      field("school", "education", i, "school", { ph: "Siberian Federal University" }) +
-      field("location", "education", i, "location", { ph: "Krasnoyarsk, Russia" }) +
+      field("school", "education", i, "school", { ph: "State University" }) +
+      field("location", "education", i, "location", { ph: "Springfield, USA" }) +
       field("degree", "education", i, "degree", { ph: "BSc, Computer Science" }) +
       field("dates", "education", i, "dates", { ph: "2014 -- 2018" }) +
       `</div></details>`;
