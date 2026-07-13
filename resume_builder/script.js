@@ -1,7 +1,9 @@
 /* Resume Typesetter — form on the left, LaTeX-style letter page on the right. */
 "use strict";
 
-const LS_KEY = "resume-typesetter-v1";
+const LS_KEY = "resume-typesetter-v1";           // legacy single-doc key (migrated on boot)
+const INDEX_KEY = "resume-typesetter-index-v1";  // { activeId, list:[{id,name}] }
+const DOC_PREFIX = "resume-typesetter-doc-";      // DOC_PREFIX + id -> résumé JSON
 const PAGE_W = 816;  // 8.5in at 96dpi
 const PAGE_H = 1056; // 11in at 96dpi
 
@@ -97,16 +99,51 @@ function normalize(raw) {
   return s;
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? normalize(JSON.parse(raw)) : null;
-  } catch (_) {
-    return null;
-  }
+function genId() {
+  return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function safeParse(raw) { try { return raw ? JSON.parse(raw) : null; } catch (_) { return null; } }
+
+function loadIndex() { return safeParse(localStorage.getItem(INDEX_KEY)); }
+function saveIndex(idx) { try { localStorage.setItem(INDEX_KEY, JSON.stringify(idx)); } catch (_) {} }
+function docKey(id) { return DOC_PREFIX + id; }
+function loadDoc(id) { const d = safeParse(localStorage.getItem(docKey(id))); return d ? normalize(d) : null; }
+function writeDoc(id, data) { try { localStorage.setItem(docKey(id), JSON.stringify(data)); } catch (_) {} }
+
+function docName(data, fallback) {
+  const n = (data && typeof data.name === "string") ? data.name.trim() : "";
+  return n || fallback;
 }
 
-let state = loadState() || clone(SAMPLE);
+let activeId = null;
+
+// Establish the document index — migrating a legacy single résumé if present — and return the active doc.
+function bootState() {
+  let idx = loadIndex();
+  if (!idx || !Array.isArray(idx.list) || !idx.list.length) {
+    const legacy = safeParse(localStorage.getItem(LS_KEY));
+    const id = genId();
+    if (legacy) {
+      const data = normalize(legacy);
+      idx = { activeId: id, list: [{ id, name: docName(data, "My résumé") }] };
+      saveIndex(idx);
+      writeDoc(id, data);
+      try { localStorage.removeItem(LS_KEY); } catch (_) {}
+    } else {
+      idx = { activeId: id, list: [{ id, name: "Sample résumé" }] };
+      saveIndex(idx);
+      writeDoc(id, clone(SAMPLE));
+    }
+  }
+  if (!idx.list.some((d) => d.id === idx.activeId)) {
+    idx.activeId = idx.list[0].id;
+    saveIndex(idx);
+  }
+  activeId = idx.activeId;
+  return loadDoc(activeId) || clone(SAMPLE);
+}
+
+let state = bootState();
 const openEntries = new WeakSet(); // which experience/education cards are expanded
 
 /* ---------------- dom refs ---------------- */
@@ -117,6 +154,9 @@ const scaler = document.getElementById("scaler");
 const desk = document.getElementById("desk");
 const saveState = document.getElementById("save-state");
 const fileImport = document.getElementById("file-import");
+const docBtn = document.getElementById("doc-btn");
+const docMenu = document.getElementById("doc-menu");
+const docCurrent = document.getElementById("doc-current");
 
 /* ---------------- text formatting (mini-TeX) ---------------- */
 
@@ -395,17 +435,19 @@ editor.addEventListener("toggle", (e) => {
 
 let saveTimer = null;
 let saveFade = null;
+function persist() {
+  try {
+    writeDoc(activeId, state);
+    saveState.textContent = "✓ saved";
+    saveState.classList.add("on");
+    clearTimeout(saveFade);
+    saveFade = setTimeout(() => saveState.classList.remove("on"), 1400);
+  } catch (_) { /* storage full / private mode — preview still works */ }
+}
+function saveNow() { clearTimeout(saveTimer); persist(); }
 function saveSoon() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(state));
-      saveState.textContent = "✓ saved";
-      saveState.classList.add("on");
-      clearTimeout(saveFade);
-      saveFade = setTimeout(() => saveState.classList.remove("on"), 1400);
-    } catch (_) { /* storage full / private mode — preview still works */ }
-  }, 300);
+  saveTimer = setTimeout(persist, 300);
 }
 
 /* ---------------- toolbar ---------------- */
@@ -461,8 +503,136 @@ window.addEventListener("beforeprint", () => {
 });
 window.addEventListener("afterprint", () => { document.title = APP_TITLE; });
 
+/* ---------------- résumé documents (multi-doc switcher) ---------------- */
+
+function currentName() {
+  const idx = loadIndex();
+  const entry = idx && idx.list.find((d) => d.id === activeId);
+  return entry ? entry.name : "Untitled";
+}
+
+function renderSwitcher() {
+  docCurrent.textContent = currentName();
+}
+
+function renderMenu() {
+  const idx = loadIndex() || { list: [], activeId };
+  const rows = idx.list.map((d) => {
+    const active = d.id === activeId;
+    return `<div class="doc-row${active ? " active" : ""}" data-id="${d.id}">` +
+      `<button class="doc-open" type="button" data-act="open" data-id="${d.id}" title="Switch to this résumé">` +
+      `<span class="doc-check">${active ? "▸" : ""}</span>` +
+      `<span class="doc-label">${esc(d.name)}</span></button>` +
+      `<span class="doc-row-actions">` +
+      `<button class="btn-ic" type="button" data-act="rename" data-id="${d.id}" title="Rename">✎</button>` +
+      `<button class="btn-ic" type="button" data-act="delete" data-id="${d.id}" title="Delete">✕</button>` +
+      `</span></div>`;
+  }).join("");
+  docMenu.innerHTML = rows + `<button class="doc-new" type="button" data-act="new">+ new résumé</button>`;
+}
+
+function openMenu() {
+  renderMenu();
+  docMenu.hidden = false;
+  docBtn.setAttribute("aria-expanded", "true");
+  document.addEventListener("click", onDocClickAway, true);
+  document.addEventListener("keydown", onDocEsc, true);
+}
+function closeMenu() {
+  docMenu.hidden = true;
+  docBtn.setAttribute("aria-expanded", "false");
+  document.removeEventListener("click", onDocClickAway, true);
+  document.removeEventListener("keydown", onDocEsc, true);
+}
+function onDocClickAway(e) { if (!e.target.closest("#doc-switch")) closeMenu(); }
+function onDocEsc(e) { if (e.key === "Escape") closeMenu(); }
+
+docBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (docMenu.hidden) openMenu(); else closeMenu();
+});
+
+docMenu.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  e.preventDefault();
+  const { act, id } = btn.dataset;
+  if (act === "open") { switchTo(id); closeMenu(); }
+  else if (act === "new") { newDoc(); closeMenu(); }
+  else if (act === "rename") { renameDoc(id); }
+  else if (act === "delete") { deleteDoc(id); }
+});
+
+// Load a document into the editor + preview, marking it active.
+function loadDocInto(id) {
+  activeId = id;
+  const idx = loadIndex();
+  if (idx) { idx.activeId = id; saveIndex(idx); }
+  state = loadDoc(id) || clone(BLANK);
+  syncStaticFields();
+  buildLists();
+  renderPreview();
+  renderSwitcher();
+}
+
+function switchTo(id) {
+  if (id === activeId) return;
+  saveNow();               // flush pending edits to the current doc first
+  loadDocInto(id);
+}
+
+function newDoc() {
+  saveNow();
+  const id = genId();
+  const idx = loadIndex() || { activeId: null, list: [] };
+  idx.list.push({ id, name: "Untitled résumé" });
+  idx.activeId = id;
+  saveIndex(idx);
+  writeDoc(id, clone(BLANK));
+  loadDocInto(id);
+}
+
+function renameDoc(id) {
+  const idx = loadIndex();
+  const entry = idx && idx.list.find((d) => d.id === id);
+  if (!entry) return;
+  const name = prompt("Rename résumé", entry.name);
+  if (name === null) return;
+  entry.name = name.trim() || entry.name;
+  saveIndex(idx);
+  renderSwitcher();
+  renderMenu();
+}
+
+function deleteDoc(id) {
+  const idx = loadIndex();
+  if (!idx) return;
+  const entry = idx.list.find((d) => d.id === id);
+  if (!entry) return;
+  if (!confirm(`Delete “${entry.name}”? This can't be undone.`)) return;
+  idx.list = idx.list.filter((d) => d.id !== id);
+  try { localStorage.removeItem(docKey(id)); } catch (_) {}
+  const wasActive = id === activeId;
+  if (!idx.list.length) {
+    // never leave zero documents — seed a fresh blank one
+    const nid = genId();
+    idx.list.push({ id: nid, name: "Untitled résumé" });
+    idx.activeId = nid;
+    writeDoc(nid, clone(BLANK));
+    saveIndex(idx);
+    loadDocInto(nid);
+  } else {
+    if (idx.activeId === id) idx.activeId = idx.list[0].id;
+    saveIndex(idx);
+    if (wasActive) loadDocInto(idx.activeId);
+    else renderSwitcher();
+  }
+  renderMenu();
+}
+
 /* ---------------- boot ---------------- */
 
 syncStaticFields();
 buildLists();
 renderPreview();
+renderSwitcher();
