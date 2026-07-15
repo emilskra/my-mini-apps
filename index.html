@@ -431,8 +431,6 @@
         <span class="go" aria-hidden="true">&rarr;</span>
       </a>
     </div>
-
-    <div class="hero-footer">© <span id="year"></span> Emil Agamamedov. All rights reserved.</div>
   </header>
 
   <!-- ============ PROJECTS ============ -->
@@ -468,12 +466,6 @@
     </div>
   </section>
 
-  <footer class="site-footer">
-    © <span id="year2"></span> Emil Agamamedov ·
-    <a href="https://github.com/emilskra/my-mini-apps" target="_blank" rel="noopener">GitHub</a> ·
-    <a href="mailto:emilagamamedov@gmail.com">Email</a>
-  </footer>
-
   <script>
     // Add a new app by appending an entry here.
     const apps = [
@@ -508,14 +500,10 @@
           '<span class="entry-name">' + app.name + "</span>" +
           '<span class="entry-desc">' + app.tagline + "</span>" +
         "</span>" +
-        (app.tag ? '<span class="entry-tag">' + app.tag + "</span>" : "") +
         '<span class="arrow" aria-hidden="true">&#8599;</span>';
       list.appendChild(a);
     });
 
-    const y = new Date().getFullYear();
-    document.getElementById("year").textContent = y;
-    document.getElementById("year2").textContent = y;
 
     // highlight nav item in view
     const links = document.querySelectorAll(".menu a");
