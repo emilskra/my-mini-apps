@@ -3,3 +3,6 @@
 
 # Personal résumé data — kept local, not published
 resume_builder/emil-resume.json
+
+# Impeccable live-mode session journals — local recovery state, not source
+.impeccable/live/sessions/
