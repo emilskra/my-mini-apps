@@ -24,9 +24,26 @@ A small workshop of single-purpose web apps — plain HTML, CSS and JavaScript, 
 ## Adding an app
 
 1. Create a new folder at the root (e.g. `my-app/`) with its own `index.html`.
-2. Add an entry to the `apps` array in the root `index.html` so it appears on the landing page.
+2. Copy one `<li>` in the Projects list in the root `index.html`, point it at the new folder, and update the name and description.
+
+The list is plain markup rather than JavaScript-generated, so it still renders with scripting disabled and is visible to crawlers.
 
 Everything uses relative paths, so each app works both locally (open the file) and under the GitHub Pages project path.
+
+## Hero art
+
+The landing page ships three art-directed crops of `assets/background.jpg`, each cut from the
+illustration's native height and encoded as AVIF with a JPEG fallback:
+
+| Crop | Files | Used when |
+| --- | --- | --- |
+| 3:2 | `hero-wide-{768,1152,1536}` | landscape viewports |
+| 4:5 | `hero-mid-{576,819}` | portrait tablets |
+| 9:16 | `hero-tall-{432,576}` | phones |
+
+`assets/background.jpg` stays as the `<img src>` fallback. To regenerate after replacing the
+illustration, crop centred with `sips -c <height> <width>` and encode with
+`sips -s format avif -s formatOptions 62`.
 
 ## Deployment
 
