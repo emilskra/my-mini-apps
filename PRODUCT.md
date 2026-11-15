@@ -42,6 +42,7 @@ The apps are the argument. Each one is a complete, live, usable artifact — not
 - `floor_planner/floor-planner.html` — drop in a floor plan image, calibrate the scale, arrange furniture at real-world sizes. Persists multiple projects.
 - `resume_builder/` — LaTeX-flavored résumé typesetter: fill fields on the left, a letter page typesets on the right, print straight to PDF. Multiple documents, JSON import/export.
 - `forethought/` — twelve short games, one per planning habit (say “I don't know”, ask dumb questions, listen, go to the source, explain simply, learn from others' errors, Occam's razor, “compared to what?”, pre-mortem, second-order thinking, solve backwards, Chesterton's fence). Best scores persist per game.
+- `chess_openings/` — "Opening Drills": chess opening trainer. Study page per opening (ideas, plans for both sides), step-through walk-throughs with per-move notes, and drills where the board plays the other side and takes back off-book moves with an explanation. Covers the Caro-Kann and French for Black and the Queen's, King's, Evans, Smith-Morra and Danish gambits for White; drillable from either colour. The book lives in `chess_openings/openings.js`; a small rules core (`chess.js`) validates every line at load. Progress (clean-run streaks per line and side) in `localStorage`.
 
 **Constraints**
 
@@ -64,7 +65,7 @@ The apps are the argument. Each one is a complete, live, usable artifact — not
 
 **Real, usable now**
 
-- Four working apps, listed above, each linkable and functional with no setup.
+- Five working apps, listed above, each linkable and functional with no setup.
 - Emil is a Software Engineer & Tech Lead with over 10 years of experience.
 - Live contact channels (email, LinkedIn, Telegram).
 

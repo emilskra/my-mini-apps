@@ -12,6 +12,7 @@ A small workshop of single-purpose web apps — plain HTML, CSS and JavaScript, 
 | [Floor Planner](floor_planner/floor-planner.html) | Drop in a floor plan, calibrate the scale, and arrange furniture at real-world sizes before moving a single thing. |
 | [Resume Typesetter](resume_builder/) | Fill in your details on the left, watch a LaTeX-style résumé typeset itself on a letter page on the right, then print straight to PDF. |
 | [Forethought](forethought/) | Twelve small games that train planning habits — saying “I don't know”, asking dumb questions, going to the source, Occam's razor, pre-mortems, second-order thinking, solving backwards, Chesterton's fence and more. |
+| [Opening Drills](chess_openings/) | Learn chess openings move by move — read the ideas, walk through each line with notes, then drill it as either colour. Leave the book and the move is taken back and explained. |
 
 ## Structure
 
@@ -21,6 +22,7 @@ A small workshop of single-purpose web apps — plain HTML, CSS and JavaScript, 
 /floor_planner/    the floor planner app
 /resume_builder/   the resume typesetter app
 /forethought/      the forethought thinking games
+/chess_openings/   the chess opening trainer
 ```
 
 ## Adding an app
