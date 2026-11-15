@@ -41,6 +41,7 @@ The apps are the argument. Each one is a complete, live, usable artifact — not
 - `matches/` — "Vesta", William James's matchbox exercise for training the will: take 50 matches out one by one, bring them back, log what tried to stop you. Seven-day streak tracking.
 - `floor_planner/floor-planner.html` — drop in a floor plan image, calibrate the scale, arrange furniture at real-world sizes. Persists multiple projects.
 - `resume_builder/` — LaTeX-flavored résumé typesetter: fill fields on the left, a letter page typesets on the right, print straight to PDF. Multiple documents, JSON import/export.
+- `forethought/` — twelve short games, one per planning habit (say “I don't know”, ask dumb questions, listen, go to the source, explain simply, learn from others' errors, Occam's razor, “compared to what?”, pre-mortem, second-order thinking, solve backwards, Chesterton's fence). Best scores persist per game.
 
 **Constraints**
 
@@ -63,7 +64,7 @@ The apps are the argument. Each one is a complete, live, usable artifact — not
 
 **Real, usable now**
 
-- Three working apps, listed above, each linkable and functional with no setup.
+- Four working apps, listed above, each linkable and functional with no setup.
 - Emil is a Software Engineer & Tech Lead with over 10 years of experience.
 - Live contact channels (email, LinkedIn, Telegram).
 

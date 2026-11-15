@@ -11,6 +11,7 @@ A small workshop of single-purpose web apps — plain HTML, CSS and JavaScript, 
 | [Matches](matches/) | Train willpower with William James's matchbox exercise — take out 50 matches one by one, bring them back, and log what tried to stop you. |
 | [Floor Planner](floor_planner/floor-planner.html) | Drop in a floor plan, calibrate the scale, and arrange furniture at real-world sizes before moving a single thing. |
 | [Resume Typesetter](resume_builder/) | Fill in your details on the left, watch a LaTeX-style résumé typeset itself on a letter page on the right, then print straight to PDF. |
+| [Forethought](forethought/) | Twelve small games that train planning habits — saying “I don't know”, asking dumb questions, going to the source, Occam's razor, pre-mortems, second-order thinking, solving backwards, Chesterton's fence and more. |
 
 ## Structure
 
@@ -19,6 +20,7 @@ A small workshop of single-purpose web apps — plain HTML, CSS and JavaScript, 
 /matches/          the matches app
 /floor_planner/    the floor planner app
 /resume_builder/   the resume typesetter app
+/forethought/      the forethought thinking games
 ```
 
 ## Adding an app
